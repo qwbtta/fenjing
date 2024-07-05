@@ -1,32 +1,32 @@
 <template>
-  <div id="app">
-    <nav>
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
-    </nav>
-    <router-view/>
+  <div id="home">
+    <Sidebar v-show="showSiderbar" />
+    <router-view />
   </div>
 </template>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
+<script>
+import Sidebar from "@/components/Sidebar.vue";
+export default {
+  components: {
+    Sidebar,
+  },
+  computed: {
+    showSiderbar() {
+      let temp = ["/UploadWorks", "/login"];
+      return temp.includes(this.$route.path);
+    },
+  },
+};
+</script>
 
-nav {
-  padding: 30px;
-}
-
-nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-nav a.router-link-exact-active {
-  color: #42b983;
+<style lang="scss" scoped>
+#home {
+  display: flex;
+  justify-content: center;
+  background: #f5f8f9;
+  min-height: 100vh;
+  min-width: 1920px;
+  box-sizing: border-box;
 }
 </style>
