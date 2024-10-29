@@ -1,6 +1,6 @@
 <template>
   <div id="home">
-    <Sidebar v-show="showSiderbar" />
+    <Sidebar v-show="showSidebar" />
     <router-view />
   </div>
 </template>
@@ -12,21 +12,21 @@ export default {
     Sidebar,
   },
   computed: {
-    showSiderbar() {
-      let temp = ["/UploadWorks", "/login"];
+    showSidebar() {
+      let temp = ["/", "/contacts"];
       return temp.includes(this.$route.path);
     },
   },
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss" >
+@import "@/assets/css/common.scss";
 #home {
   display: flex;
   justify-content: center;
   background: #f5f8f9;
-  min-height: 100vh;
-  min-width: 1920px;
-  box-sizing: border-box;
+  height: 100%;
+  min-width: 1440px;
 }
 </style>

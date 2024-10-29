@@ -1,0 +1,52 @@
+*{
+    box-sizing: border-box;
+    font-family: PingFang SC, PingFang SC;
+}
+html,body{
+    margin:0;
+    height: 100%;
+}
+.flex {
+    display: flex;
+    align-items: center;
+}    
+.column {
+    display: flex;
+    flex-direction: column;
+} 
+.ellipsis {
+    overflow: hidden; 
+    white-space: nowrap; 
+    text-overflow: ellipsis;
+}
+
+input {
+    outline: none;
+    border: none;
+}
+
+textarea {
+    border: none;
+    outline: none;
+    resize: none;
+}
+
+.el-select .el-input.is-focus .el-input__inner,.el-select .el-input__inner:focus {
+    border-color: #e4e5ee;
+}
+*[contenteditable="true"]:empty:before {
+    content: attr(placeholder);
+    color: #e2e2e2;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.hide_scrollbar {
+    /* 隐藏默认的滚动条样式 */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}

@@ -15,7 +15,42 @@ const routes = [
     name: 'storyboard',
     component: () => import('../views/storyboard.vue')
   },
-
+  {
+    path: '/exportPage',
+    name: 'exportPage',
+    component: () => import('../views/exportPage.vue')
+  },
+  {
+    path: '/storyVersion',
+    name: 'storyVersion',
+    component: () => import('../views/storyVersion.vue')
+  },
+  {
+    path: '/shootingPlan',
+    name: 'shootingPlan',
+    component: () => import('../views/shootingPlan.vue')
+  },
+  {
+    path: '/shootingNotice',
+    name: 'shootingNotice',
+    component: () => import('../views/shootingNotice.vue')
+  },
+  {
+    path: '/noticeSheet',
+    name: 'noticeSheet',
+    component: () => import('../views/noticeSheet.vue')
+  },
+  {
+    path: '/contacts',
+    name: 'contacts',
+    component: () => import('../views/contacts.vue')
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('../views/login.vue')
+  },
+  
 ]
 
 const router = new VueRouter({
