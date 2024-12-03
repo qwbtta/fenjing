@@ -7,17 +7,16 @@
       <div class="subtitle">通告标题</div>
 
       <input
-        v-model="tempActiveNotice.form1.title"
+        v-model="tempActiveNotice.form1.shootAnnounce.announceName"
         type="text"
         placeholder="请输入通告标题"
       />
       <div class="subtitle">拍摄日期</div>
       <el-date-picker
         style="width: 100%"
-        v-model="tempActiveNotice.form1.dateSelect"
+        v-model="tempActiveNotice.form1.shootAnnounce.announceTime"
         type="date"
         placeholder="选择日期"
-        value-format="yyyy年MM月dd日"
         :clearable="false"
       >
       </el-date-picker>
@@ -31,10 +30,11 @@
             
 <script>
 import { mapState, mapMutations } from "vuex";
+import { creatAnnounce } from "@/assets/js/request";
 export default {
   components: {},
   computed: {
-    ...mapState(["noticeList", "activeNotice"]),
+    ...mapState(["noticeList", "activeNotice", "activeProject"]),
   },
   data() {
     return {
@@ -42,10 +42,10 @@ export default {
         //当前正在编辑的通告
         id: "",
         form1: {
-          title: "",
-          dateSelect: "",
-          timeSelect: "",
-          notes: "",
+          shootAnnounce: {
+            announceName: "",
+            announceTime: "",
+          },
         }, //创建通告页
         form2: {}, //完善通告页
         form3: {}, //计划与日程页
@@ -55,32 +55,39 @@ export default {
   methods: {
     ...mapMutations(["SET_NOTICELIST", "SET_ACTIVENOTICE"]),
     confirm() {
-      if (!this.tempActiveNotice.form1.title) {
+      if (!this.tempActiveNotice.form1.shootAnnounce.announceName) {
         this.$message({
           message: "请填写通告标题",
           type: "error",
         });
         return;
       }
-      if (!this.tempActiveNotice.form1.dateSelect) {
+      if (!this.tempActiveNotice.form1.shootAnnounce.announceTime) {
         this.$message({
           message: "请填写拍摄日期",
           type: "error",
         });
         return;
       }
-      this.tempActiveNotice.form1.timeStamp = Date.parse(
-        this.tempActiveNotice.form1.dateSelect
-          .replace("年", "/")
-          .replace("月", "/")
-          .replace("日", "")
-      );
+      // this.tempActiveNotice.form1.timeStamp = Date.parse(
+      //   this.tempActiveNotice.form1.dateSelect
+      //     .replace("年", "/")
+      //     .replace("月", "/")
+      //     .replace("日", "")
+      // );
       this.tempActiveNotice.id = Date.now().toString();
       this.SET_ACTIVENOTICE(this.tempActiveNotice);
-
-      this.noticeList.push(this.tempActiveNotice);
-      this.SET_NOTICELIST(this.noticeList);
-      this.$router.push("/noticeSheet");
+      creatAnnounce({
+        projectId: this.activeProject.id,
+        announceName: this.tempActiveNotice.form1.shootAnnounce.announceName,
+        announceTime: this.tempActiveNotice.form1.shootAnnounce.announceTime,
+      }).then((res) => {
+        // this.$router.push("/noticeSheet");
+        this.$emit("getList");
+        this.$emit("close");
+      });
+      // this.noticeList.push(this.tempActiveNotice);
+      // this.SET_NOTICELIST(this.noticeList);
     },
   },
   created() {},
@@ -100,7 +107,6 @@ export default {
     width: 100%;
     height: 32px;
     border-radius: 5px;
-    font-family: PingFang SC, PingFang SC;
     font-weight: 400;
     font-size: 12px;
     color: #3d3d3d;
@@ -115,7 +121,6 @@ export default {
     border: 1px solid #e4e5ee;
     outline: none;
     padding: 0 12px;
-    font-family: PingFang SC, PingFang SC;
     font-weight: 400;
     font-size: 12px;
     color: #3d3d3d;
@@ -130,7 +135,6 @@ export default {
     border-radius: 20px;
     padding: 0 20px 29px 18px;
     .panel_head {
-      font-family: PingFang SC, PingFang SC;
       font-weight: 500;
       font-size: 20px;
       color: #3d3d3d;
@@ -138,7 +142,6 @@ export default {
       justify-content: space-between;
     }
     .subtitle {
-      font-family: PingFang SC, PingFang SC;
       font-weight: 500;
       font-size: 14px;
       color: #3d3d3d;
@@ -154,7 +157,6 @@ export default {
         border-radius: 11px;
         text-align: center;
         line-height: 38px;
-        font-family: PingFang SC, PingFang SC;
         font-weight: 400;
         font-size: 14px;
         margin-left: 20px;

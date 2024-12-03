@@ -10,28 +10,40 @@
     </div>
     <div class="main flex">
       <div class="main_left flex">
-        <img :src="activeData.imgUrl" alt="" />
+        <img
+          v-if="activeData.file?.fileUrl"
+          :src="activeData.file?.fileUrl"
+          alt=""
+        />
       </div>
       <div class="main_right">
         <div class="shots_item" v-for="(item, index) in list" :key="index">
           <img
-            v-if="index == activeDataIndex"
+            v-if="index == dataAcitiveIndex"
             class="check"
             src="@/assets/img/operatePage/checked.png"
             alt=""
-            @click="activeDataIndex = index"
+            @click="dataAcitiveIndex = index"
           />
           <img
             v-else
             class="check"
             src="@/assets/img/operatePage/check.png"
             alt=""
-            @click="activeDataIndex = index"
+            @click="dataAcitiveIndex = index"
           />
-          <img class="frameImg" draggable="false" :src="item.imgUrl" alt="" />
+
+          <img
+            v-if="item.file?.fileUrl"
+            class="frameImg"
+            draggable="false"
+            :src="item.file?.fileUrl"
+            alt=""
+          />
+          <div v-else class="empty flex">未添加图片</div>
           <div class="shot_des">
-            <span class="nums">{{ item.nums }}</span
-            ><span class="content">{{ item.content }}</span>
+            <span class="nums">镜头{{ item.sort }}</span
+            ><span class="content">{{ item.textContent }}</span>
           </div>
         </div>
       </div>
@@ -40,7 +52,7 @@
       <span class="footer_title">放映模式</span>
       <div class="mode_item" @click="checkMode(0)">
         <div class="img_con flex" :class="{ item_active: modeType == 0 }">
-          <img src="@/assets/img/operatePage/auto.png" alt="" />
+          <img src="@/assets/img/operatePage/manual.png" alt="" />
         </div>
         <span class="mode_name">手动切换</span>
       </div>
@@ -65,30 +77,30 @@ export default {
   data() {
     return {
       list: [],
-      activeDataIndex: 0, //当前渲染对象在数组的位次
-      activeImgIndex: 0, //当前渲染图片在对象图片数组的位次
+      dataAcitiveIndex: 0, //当前渲染分镜在分镜列表的位次
+      imgActiveIndex: 0, //当前渲染图片在对象图片数组的位次
       modeType: 0, //0手动切换 1自动切换
       timer: null,
     };
   },
   methods: {
     previous() {
-      if (this.activeImgIndex !== 0) {
-        this.activeImgIndex -= 1;
+      if (this.imgActiveIndex !== 0) {
+        this.imgActiveIndex -= 1;
         return;
       }
-      this.activeDataIndex -= 1;
-      this.activeImgIndex = this.activeData.frame.length - 1;
-      this.activeData = this.storyboardList[this.activeDataIndex];
+      this.dataAcitiveIndex -= 1;
+      this.imgActiveIndex = this.activeData.frame.length - 1;
+      this.activeData = this.storyboardList[this.dataAcitiveIndex];
     },
     next() {
-      if (this.activeImgIndex < this.activeData.frame.length - 1) {
-        this.activeImgIndex += 1;
+      if (this.imgActiveIndex < this.activeData.frame.length - 1) {
+        this.imgActiveIndex += 1;
         return;
       }
-      this.activeDataIndex += 1;
-      this.activeImgIndex = 0;
-      this.activeData = this.storyboardList[this.activeDataIndex];
+      this.dataAcitiveIndex += 1;
+      this.imgActiveIndex = 0;
+      this.activeData = this.storyboardList[this.dataAcitiveIndex];
     },
     checkMode(type) {
       this.modeType = type;
@@ -98,38 +110,51 @@ export default {
       } else {
         //自动切换
         this.timer = setInterval(() => {
-          if (this.list.length - 1 == this.activeDataIndex) {
-            this.activeDataIndex = 0;
+          if (this.list.length - 1 == this.dataAcitiveIndex) {
+            this.dataAcitiveIndex = 0;
           } else {
-            this.activeDataIndex += 1;
+            this.dataAcitiveIndex += 1;
           }
         }, 3000);
       }
     },
   },
   computed: {
-    // showPrevious() {
-    //   return !(this.activeDataIndex == 0 && this.activeImgIndex == 0);
-    // },
-    // showNext() {
-    //   return !(
-    //     this.activeDataIndex == this.storyboardList.length - 1 &&
-    //     this.activeImgIndex == this.activeData.frame.length - 1
-    //   );
-    // },
     //当前渲染的对象
     activeData() {
-      return this.list[this.activeDataIndex];
+      return this.list[this.dataAcitiveIndex];
     },
   },
   created() {
+    // 要实现功能 对数据进行改造 有点麻烦
+    let tempList = [];
     for (let i = 0; i < this.storyboardList.length; i++) {
-      for (let y = 0; y < this.storyboardList[i].frame.length; y++) {
-        let tempItem = JSON.parse(JSON.stringify(this.storyboardList[i]));
-        tempItem.imgUrl = this.storyboardList[i].frame[y];
-        this.list.push(tempItem);
+      let tempItem = {
+        sort: this.storyboardList[i].sort,
+        rowId: this.storyboardList[i].rowId,
+      };
+      for (let y = 0; y < this.storyboardList[i].colObj.length; y++) {
+        if (this.storyboardList[i].colObj[y].name == "内容") {
+          tempItem.textContent = this.storyboardList[i].colObj[y].content;
+        }
+        if (this.storyboardList[i].colObj[y].name == "画面") {
+          tempItem.imgList = this.storyboardList[i].colObj[y].content;
+        }
+      }
+      tempList.push(tempItem);
+    }
+    for (let i = 0; i < tempList.length; i++) {
+      if (tempList[i].imgList.length == 0) {
+        this.list.push(tempList[i]);
+      } else {
+        for (let j = 0; j < tempList[i].imgList.length; j++) {
+          let tempItem = JSON.parse(JSON.stringify(tempList[i]));
+          tempItem.file = tempItem.imgList[j];
+          this.list.push(tempItem);
+        }
       }
     }
+    console.log(this.list, " this.list");
   },
   destroyed() {
     clearInterval(this.timer);
@@ -148,7 +173,6 @@ export default {
   .panel_head {
     width: 100%;
     height: 54px;
-    font-family: PingFang SC, PingFang SC;
     font-weight: 600;
     font-size: 16px;
     color: #3d3d3d;
@@ -169,7 +193,9 @@ export default {
       background: #000;
       justify-content: center;
       > img {
+        height: 100%;
         width: 100%;
+        object-fit: contain;
       }
     }
     .main_right {
@@ -186,22 +212,30 @@ export default {
           align-self: center;
           cursor: pointer;
         }
+        .empty {
+          width: 169px;
+          height: 94px;
+          background: #f4f6f7;
+          justify-content: center;
+          font-weight: 500;
+          font-size: 14px;
+          color: #959595;
+        }
         .frameImg {
           width: 169px;
           height: 94px;
-          margin-right: 14px;
+          object-fit: contain;
         }
         .shot_des {
           display: flex;
           flex-direction: column;
+          margin-left: 14px;
           .nums {
-            font-family: PingFang SC, PingFang SC;
             font-weight: 400;
             font-size: 12px;
             color: #3d3d3d;
           }
           .content {
-            font-family: PingFang SC, PingFang SC;
             font-weight: 500;
             font-size: 14px;
             color: #3d3d3d;
@@ -215,7 +249,6 @@ export default {
     height: 80px;
     border-top: 1px solid #eeeeee;
     .footer_title {
-      font-family: PingFang SC, PingFang SC;
       font-weight: 600;
       font-size: 16px;
       color: #3d3d3d;
@@ -225,7 +258,6 @@ export default {
       display: flex;
       flex-direction: column;
       align-items: center;
-      font-family: PingFang SC, PingFang SC;
       font-weight: 400;
       font-size: 12px;
       color: #3d3d3d;

@@ -3,7 +3,12 @@
     <div class="shooting_panel">
       <div class="panel_head flex">
         <span>{{ this.OperationType == "编辑" ? "修改场次" : "新建场次" }}</span
-        ><span @click="$emit('close')">关闭</span>
+        ><img
+          class="close"
+          @click="$emit('close')"
+          src="@/assets/img/operatePage/close.png"
+          alt=""
+        />
       </div>
       <div class="subtitle flex">
         <img
@@ -13,7 +18,7 @@
         />拍摄场次
       </div>
       <input
-        v-model="shootingData.shootingSessions"
+        v-model="shootingData.planContent"
         type="text"
         placeholder="请填写需要拍摄场次的编号或者名称"
       />
@@ -23,7 +28,7 @@
           <div class="subtitle">时段</div>
           <el-select
             class="el_elect"
-            v-model="shootingData.timeSlotValue"
+            v-model="shootingData.dateType"
             placeholder="请选择"
           >
             <el-option
@@ -39,7 +44,7 @@
           <div class="subtitle">内/外景</div>
           <el-select
             class="el_elect"
-            v-model="shootingData.scenerySlotValue"
+            v-model="shootingData.sceneryType"
             placeholder="请选择"
           >
             <el-option
@@ -56,22 +61,22 @@
         <div class="row_item">
           <div class="subtitle">计划拍摄日期</div>
           <el-date-picker
-            v-model="shootingData.dateSelect"
+            v-model="dateSelect"
             type="date"
             placeholder="选择日期"
-            value-format="yyyy年MM月dd日"
             :clearable="false"
+            @change="dateChange"
           >
           </el-date-picker>
         </div>
         <div class="row_item">
           <div class="subtitle">计划拍摄时间</div>
           <el-time-picker
-            v-model="shootingData.timeSelect"
+            v-model="timeSelect"
             placeholder="任意时间点"
             format="HH:mm"
-            value-format="HH:mm"
             :clearable="false"
+            @change="timeChange"
           >
           </el-time-picker>
         </div>
@@ -79,7 +84,7 @@
 
       <div class="subtitle">拍摄地点</div>
       <input
-        v-model="shootingData.shootingLocation"
+        v-model="shootingData.shootAdress"
         type="text"
         placeholder="请填写地址"
       />
@@ -95,82 +100,106 @@
             
 <script>
 import { mapState, mapMutations } from "vuex";
+import { creatShootPlan, updateShootPlan } from "@/assets/js/request";
+import { timeSlot, scenerySlot } from "@/assets/js/data";
 export default {
-  props: ["planIndex", "OperationType"],
+  props: ["editItem", "OperationType"],
   components: {},
   computed: {
-    ...mapState(["shootingList"]),
+    ...mapState(["activeProject"]),
   },
   data() {
     return {
       shootingData: {
-        shootingSessions: "", //拍摄场次
-        timeSlotValue: "白天", //拍摄时段
-        scenerySlotValue: "内景", //拍摄景别
-        dateSelect: "", //计划拍摄日期
-        timeSelect: "", //计划拍摄时间
-        shootingLocation: "", //拍摄地点
-        shotList: [], //镜头列表
+        planContent: "", //拍摄场次
+        dateType: "0", //拍摄时段
+        sceneryType: "0", //拍摄景别
+        startTime: "", //开始时间
+        shootAdress: "", //拍摄地点
       },
-      timeSlot: [
-        {
-          value: "白天",
-          label: "白天",
-        },
-        {
-          value: "夜晚",
-          label: "夜晚",
-        },
-        {
-          value: "上午",
-          label: "上午",
-        },
-        {
-          value: "下午",
-          label: "下午",
-        },
-      ],
-      scenerySlot: [
-        {
-          value: "内景",
-          label: "内景",
-        },
-        {
-          value: "外景",
-          label: "外景",
-        },
-      ],
+      dateSelect: "", //计划拍摄日期
+      timeSelect: "", //计划拍摄时间
+      timeSlot: this.dealData(timeSlot),
+      scenerySlot: this.dealData(scenerySlot),
     };
   },
+
   methods: {
-    ...mapMutations(["SET_SHOOTINGLIST"]),
+    dealData(data) {
+      let tempList = [];
+      for (let i = 0; i < data.length; i++) {
+        let tempItem = {
+          value: i.toString(),
+          label: data[i],
+        };
+        tempList.push(tempItem);
+      }
+      return tempList;
+    },
     checkValue(value, activeValue) {
       this.shootingData[activeValue] = value;
       this[`${activeValue}Show`] = false;
     },
+    dateChange() {
+      if (!this.timeSelect) {
+        let currentDate = new Date();
+        let hours = currentDate.getHours();
+        let minutes = currentDate.getMinutes();
+        this.dateSelect.setHours(hours);
+        this.dateSelect.setMinutes(minutes);
+        this.timeSelect = this.dateSelect;
+      }
+    },
+    timeChange() {
+      if (!this.dateSelect) {
+        this.dateSelect = this.timeSelect;
+      }
+    },
     confirm() {
-      if (!this.shootingData.shootingSessions) {
+      if (!this.shootingData.planContent) {
         this.$message({
           message: "请填写需要拍摄场次的编号或者名称",
           type: "error",
         });
         return;
       }
-      if (this.OperationType == "编辑") {
-        this.shootingList[this.planIndex] = this.shootingData;
+      // if (this.OperationType == "编辑") {
+      //   this.shootingList[this.planIndex] = this.shootingData;
+      // } else {
+      //   this.shootingList.push(this.shootingData);
+      // }
+      let params = {
+        planContent: this.shootingData.planContent,
+        dateType: this.shootingData.dateType,
+        sceneryType: this.shootingData.sceneryType,
+        // startTime: this.shootingData.startTime,
+        shootAdress: this.shootingData.shootAdress,
+      };
+      // let params = this.shootingData;
+      this.dateSelect.setHours(this.timeSelect.getHours());
+      this.dateSelect.setMinutes(this.timeSelect.getMinutes());
+      params.startTime = this.dateSelect;
+      if (this.OperationType == "新建") {
+        params.projectId = this.activeProject.id;
+        creatShootPlan(params).then((res) => {
+          this.$emit("close", "refreshList");
+        });
       } else {
-        this.shootingList.push(this.shootingData);
+        params.id = this.shootingData.id;
+        // params.endTime = "";
+        // params.remark = "";
+        updateShootPlan(params).then((res) => {
+          this.$emit("close", "refreshList");
+        });
       }
-      this.SET_SHOOTINGLIST(this.shootingList);
-      this.$emit("close");
     },
   },
   created() {
-    if (this.OperationType == "编辑") {
-      this.shootingData = JSON.parse(
-        JSON.stringify(this.shootingList[this.planIndex])
-      );
+    if (this.OperationType == "编辑" && this.editItem) {
+      this.shootingData = JSON.parse(JSON.stringify(this.editItem));
+      this.dateSelect = this.timeSelect = new Date(this.shootingData.startTime);
     }
+    console.log(this.shootingData, "this.shootingData ");
   },
 };
 </script>
@@ -189,7 +218,6 @@ export default {
     width: 204px;
     height: 32px;
     border-radius: 5px;
-    font-family: PingFang SC, PingFang SC;
     font-weight: 400;
     font-size: 12px;
     color: #3d3d3d;
@@ -205,7 +233,6 @@ export default {
     border: 1px solid #e4e5ee;
     outline: none;
     padding: 0 12px;
-    font-family: PingFang SC, PingFang SC;
     font-weight: 400;
     font-size: 12px;
     color: #3d3d3d;
@@ -220,19 +247,19 @@ export default {
     border-radius: 18px;
     padding: 0 20px 31px;
     .panel_head {
-      font-family: PingFang SC, PingFang SC;
       font-weight: 500;
       font-size: 16px;
       color: #3d3d3d;
       margin-top: 28px;
       justify-content: space-between;
       .close {
+        width: 20px;
+        height: 20px;
         margin-right: 4px;
         cursor: pointer;
       }
     }
     .subtitle {
-      font-family: PingFang SC, PingFang SC;
       font-weight: 500;
       font-size: 14px;
       color: #3d3d3d;
@@ -259,7 +286,6 @@ export default {
         border-radius: 11px;
         text-align: center;
         line-height: 38px;
-        font-family: PingFang SC, PingFang SC;
         font-weight: 400;
         font-size: 14px;
         margin-left: 20px;

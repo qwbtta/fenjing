@@ -11,7 +11,7 @@
             src="@/assets/img/operatePage/tips.png"
             alt=""
           />
-          <div class="new_shot">+ 新建镜头</div>
+          <!-- <div class="new_shot">+ 新建镜头</div> -->
         </div>
         <div @click="showProjectionMode = true" class="btn flex">
           <img
@@ -31,20 +31,30 @@
           v-for="(item, index) in storyboardList"
           :key="index"
         >
-          <img class="img_preview" :src="item.frame[0]" alt="" />
+          <img
+            v-if="getValue(item.colObj, '画面')[0]?.fileUrl"
+            class="img_preview"
+            :src="getValue(item.colObj, '画面')[0]?.fileUrl"
+            alt=""
+          />
+          <div v-else class="empty flex">未添加图片</div>
           <div class="row1 flex">
-            <div>{{ item.scenery }}</div>
-            <div>{{ item.times }}秒</div>
+            <div v-if="getValue(item.colObj, '景别')">
+              {{ getValue(item.colObj, "景别") }}
+            </div>
+            <div v-if="getValue(item.colObj, '时长')">
+              {{ getValue(item.colObj, "时长") }}秒
+            </div>
           </div>
           <div class="content">{{ item.content }}</div>
           <div class="item_foot flex">
             <span>镜头{{ index + 1 }}</span>
-            <img
+            <!-- <img
               @click="goStoryboardEdit(item)"
               class="edit"
               src="@/assets/img/operatePage/edit.png"
               alt=""
-            />
+            /> -->
           </div>
         </div>
       </draggable>
@@ -85,6 +95,7 @@ import StoryboardEdit from "@/components/StoryboardEdit.vue";
 import ProjectionMode from "@/components/ProjectionMode.vue";
 import FuncHead from "@/components/FuncHead.vue";
 import draggable from "vuedraggable";
+import { commonMethods } from "@/assets/js/mixin.js";
 import { mapState, mapMutations } from "vuex";
 export default {
   components: { StoryboardEdit, draggable, ProjectionMode, FuncHead },
@@ -100,6 +111,7 @@ export default {
       showTips: false,
     };
   },
+  mixins: [commonMethods],
   methods: {
     goStoryboardEdit(item) {
       this.showStoryboardEdit = true;
@@ -108,7 +120,7 @@ export default {
   },
   created() {
     this.storyboardList = this.activeProject.storyboardList;
-    // this.goStoryboardEdit(this.storyboardList[1]);
+    console.log(this.activeProject, "this.activeProject");
   },
 };
 </script>
@@ -124,7 +136,6 @@ export default {
       justify-content: space-between;
       padding-right: 30px;
       .head_title {
-        font-family: PingFang SC, PingFang SC;
         font-weight: 600;
         font-size: 24px;
         color: #3d3d3d;
@@ -142,7 +153,6 @@ export default {
         border-radius: 12px;
         text-align: center;
         line-height: 40px;
-        font-family: PingFang SC, PingFang SC;
         font-weight: 500;
         font-size: 14px;
         color: #ffffff;
@@ -154,7 +164,6 @@ export default {
         background: #ffffff;
         border-radius: 54px;
         border: 1px solid #e4e5ee;
-        font-family: PingFang SC, PingFang SC;
         font-weight: 400;
         font-size: 14px;
         color: #3d3d3d;
@@ -180,19 +189,29 @@ export default {
         padding: 10px;
         margin-top: 30px;
         .img_preview {
+          height: 134px;
+          margin: 0 auto;
+          display: block;
+        }
+        .empty {
           width: 258px;
           height: 134px;
+          background: #f4f6f7;
+          justify-content: center;
+          font-weight: 500;
+          font-size: 14px;
+          color: #959595;
         }
         .row1 {
+          height: 32px;
           margin-top: 16px;
           div {
-            width: 72px;
+            padding: 0 15px;
             height: 32px;
             background: #f4f6f7;
             border-radius: 54px;
             text-align: center;
             line-height: 32px;
-            font-family: PingFang SC, PingFang SC;
             font-weight: 400;
             font-size: 14px;
             color: #3d3d3d;
@@ -200,7 +219,6 @@ export default {
           }
         }
         .content {
-          font-family: PingFang SC, PingFang SC;
           font-weight: 500;
           font-size: 14px;
           color: #3d3d3d;
@@ -208,7 +226,6 @@ export default {
         }
         .item_foot {
           justify-content: space-between;
-          font-family: PingFang SC, PingFang SC;
           font-weight: 400;
           font-size: 12px;
           color: #3d3d3d;

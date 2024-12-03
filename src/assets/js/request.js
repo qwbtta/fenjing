@@ -1,9 +1,11 @@
+import Vue from 'vue';
 import axios from "axios";
 
 
 const baseUrl = "https://kuaifenjing.zaiguwang.com"
-let token = localStorage.getItem("token")
+
 axios.interceptors.request.use(config => {
+  let token = localStorage.getItem("token")
     if(token){
         config.headers.Authorization = `Bearer ${token}`;
     }
@@ -11,14 +13,18 @@ axios.interceptors.request.use(config => {
   });
 // 添加响应拦截器
 axios.interceptors.response.use((response) =>{
-    // if(response.data.code == 401){
-    //   localStorage.removeItem("token")
-    //   location.href = location.origin
-    // }
+    if(response.data.code == 401){
+      localStorage.removeItem("token")
+      this.$router.push('/login');
+    }
 	return response.data;
   }, 
   (error)=> {
-     
+    if(error?.response?.data?.code == 401){
+      localStorage.removeItem("token")
+      this.$router.push('/login');
+    }
+    console.error(error.response);
 });
 
   function postJSONData(url, params) {
@@ -42,10 +48,13 @@ axios.interceptors.response.use((response) =>{
   }
    
 
-
 // 登录(手机号 密码)
 export const login = (params) => {
     return  postJSONData(baseUrl + "/storyBoard/login",params)
+}
+// 注销登录
+export const userLogOff = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/userLogOff",params)
 }
 
 // 手机发送短信验证码
@@ -57,6 +66,84 @@ export const getCode = (params) => {
 export const loginWithCode = (params) => {
   return  postJSONData(baseUrl + "/storyBoard/loginWithCode",params)
 }
+
+// 查询用户信息
+export const getUserInfo = (params) => {
+  return  axios.get(baseUrl + "/storyBoard/userInfo",{
+    params: params
+})
+}
+
+// 搜索用户
+export const selContact = (params) => {
+  return  axios.get(baseUrl + "/storyBoard/contract/selContact",{
+    params: params
+})
+}
+
+// 发送邀请
+export const messageSend = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/message/messageSend",params)
+}
+
+// 接受邀请
+export const messageApply = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/message/messageApply",params)
+}
+
+// 分组列表下用户
+export const contactList = (params) => {
+  return  axios.get(baseUrl + "/storyBoard/contract/contactList",{
+    params: params
+})
+}
+
+// 分组列表
+export const groupList = (params) => {
+  return  axios.get(baseUrl + "/storyBoard/contract/groupList",{
+    params: params
+})
+}
+
+// 创建分组
+export const addGroup = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/contract/addGroup",params)
+}
+
+// 删除分组
+export const deleteGroup = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/contract/deleteGroup",params)
+}
+
+// 重命名分组
+export const updateGroup = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/contract/updateGroup",params)
+}
+
+// 联系人加入分组
+export const groupContact = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/contract/groupContact",params)
+}
+
+// 联系人移出分组
+export const removeGroupContact = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/contract/removeGroupContact",params)
+}
+
+// 删除联系人
+export const deleteContact = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/contract/deleteContact",params)
+}
+
+
+// 消息列表
+export const messageList = (params) => {
+  return  axios.get(baseUrl + "/storyBoard/message/messageList",{
+    params: params
+})
+}
+
+
 
 // 获取项目列表
 export const getProjectList = (params) => {
@@ -95,6 +182,41 @@ export const moveProjectToGroup = (params) => {
   return  postJSONData(baseUrl + "/storyBoard/project/moveProjectToGroup",params)
 }
 
+// 项目协作用户列表
+export const userList = (params) => {
+  return  axios.get(baseUrl + "/storyBoard/cooperation/userList",{
+      params: params
+  })
+}
+
+// 是否开启链接分享
+export const openShare = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/cooperation/openShare",params)
+}
+
+
+// 获取项目协作分享链接
+export const shareStatus = (params) => {
+  return  axios.get(baseUrl + "/storyBoard/cooperation/shareStatus",{
+      params: params
+  })
+}
+
+// 链接邀请方式新增协作者
+export const insertShareCooperation = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/cooperation/insertShareCooperation",params)
+}
+
+
+// 项目新增协作用户
+export const insertCooperation = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/cooperation/insertCooperation",params)
+}
+
+// 项目移除协作用户
+export const deleteCooperation = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/cooperation/deleteCooperation",params)
+}
 
 // 项目移入回收站
 export const deleteProject = (params) => {
@@ -150,6 +272,17 @@ export const deleteMirror = (params) => {
   return  postJSONData(baseUrl + "/storyBoard/mirror/deleteMirror",params)
 }
 
+// 分镜排序移动
+export const insertMirror = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/mirror/insertMirror",params)
+}
+
+// 表头排序移动
+export const moveModelColumnConfig = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/model/moveModelColumnConfig",params)
+}
+
+
 // 删除单个文件
 export const deleteFile = (params) => {
   return  postJSONData(baseUrl + "/storyBoard/file/deleteFile",params)
@@ -165,4 +298,83 @@ export const updateFileSort = (params) => {
   return  postJSONData(baseUrl + "/storyBoard/file/updateFileSort",params)
 }
 
+// 编辑模板
+export const updateModel = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/model/updateModel",params)
+}
 
+// 故事版列表
+export const storyList = (params) => {
+  return  axios.get(baseUrl + "/storyBoard/story/storyList",{
+    params: params
+  })
+}
+
+// 拍摄计划列表
+export const shootPlanList = (params) => {
+  return  axios.get(baseUrl + "/storyBoard/shootPlan/shootPlanList",{
+    params: params
+  })
+}
+
+// 新建拍摄计划
+export const creatShootPlan = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/shootPlan/creatShootPlan",params)
+}
+
+// 新建拍摄计划
+export const updateShootPlan = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/shootPlan/updateShootPlan",params)
+}
+
+// 删除拍摄计划
+export const deleteShootPlan = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/shootPlan/deleteShootPlan",params)
+}
+
+// 拍摄计划列表
+export const getStoryList = (params) => {
+  return  axios.get(baseUrl + "/storyBoard/shootPlan/storyList",{
+    params: params
+  })
+}
+
+// 未规划镜头移入/出拍摄计划
+export const movePlanSort = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/shootPlan/movePlanSort",params)
+}
+
+// 拍摄计划移动排序
+export const updatePlanSort = (params) => {
+  return  postJSONData(baseUrl + " /storyBoard/shootPlan/updatePlanSort",params)
+}
+
+// 拍摄通告列表
+export const shootAnnounceList = (params) => {
+  return  axios.get(baseUrl + "/storyBoard/shootAnnounce/shootAnnounceList",{
+    params: params
+  })
+}
+
+// 拍摄通告详情
+export const announceInfo = (params) => {
+  return  axios.get(baseUrl + "/storyBoard/shootAnnounce/announceInfo",{
+    params: params
+  })
+}
+
+// 新建拍摄通告
+export const creatAnnounce = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/shootAnnounce/creatAnnounce",params)
+}
+
+// 删除拍摄通告
+export const deleteShootAnnounce = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/shootAnnounce/deleteShootAnnounce",params)
+}
+
+
+// 编辑拍摄通告
+export const updateShootAnnounce = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/shootAnnounce/updateShootAnnounce",params)
+}

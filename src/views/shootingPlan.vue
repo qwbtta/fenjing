@@ -1,7 +1,6 @@
 <template>
   <div class="shootingPlan">
     <FuncHead />
-
     <div class="main">
       <div class="head_row flex">
         <div class="flex">
@@ -12,39 +11,68 @@
             src="@/assets/img/operatePage/tips.png"
             alt=""
           />
-          <div @click="addPlan" class="new_shot">+ 新建拍摄计划</div>
+          <div v-if="!activeProject.banEdit" @click="addPlan" class="new_shot">
+            + 新建拍摄计划
+          </div>
         </div>
         <!-- <div>放映模式</div> -->
       </div>
       <div class="main_con">
         <div class="unplanned_shots_con">
-          <span class="tiltle">未规划镜头{{ storyboardList.length }}</span>
+          <span class="tiltle"
+            >未规划镜头{{ unplannedStoryboardList.length }}</span
+          >
           <div class="shot_list">
-            <div class="empty_shotList" v-if="storyboardList.length == 0">
-              <img src="@/assets/img/operatePage/dragTips.png" alt="" />
-              <span> 已经没有未规划的镜头了</span>
+            <div
+              class="empty_shotList"
+              v-if="unplannedStoryboardList.length == 0"
+            >
+              <img
+                style="width: 57px; height: 50px"
+                src="@/assets/img/operatePage/empty_tips.png"
+                alt=""
+              />
+              <span>暂无未规划的镜头</span>
             </div>
             <draggable
               animation="300"
-              :list="storyboardList"
+              :list="unplannedStoryboardList"
               group="items"
               class="shots_con"
+              :draggable="!activeProject.banEdit"
             >
               <div
                 class="shots_item"
-                v-for="(item, index) in storyboardList"
+                v-for="(item, index) in unplannedStoryboardList"
                 :key="index"
                 draggable="true"
               >
                 <img
-                  class="frameImg"
-                  draggable="false"
-                  :src="item.frame[0]"
+                  @click="
+                    checkStory(item.rowId, !selectedStory.includes(item.rowId))
+                  "
+                  class="select_area"
+                  :src="
+                    !selectedStory.includes(item.rowId)
+                      ? require('@/assets/img/operatePage/unselect.png')
+                      : require('@/assets/img/operatePage/checked_green.png')
+                  "
                   alt=""
                 />
+
+                <img
+                  v-if="getValue(item.colObj, '画面')[0]?.fileUrl"
+                  class="frameImg"
+                  draggable="false"
+                  :src="getValue(item.colObj, '画面')[0]?.fileUrl"
+                  alt=""
+                />
+                <div v-else class="empty flex">未添加图片</div>
                 <div class="shot_des">
-                  <span class="nums">{{ item.nums }}</span
-                  ><span class="content">{{ item.content }}</span>
+                  <span class="index">镜头{{ item.sort }}</span
+                  ><span class="content">
+                    {{ getValue(item.colObj, "内容") }}</span
+                  >
                 </div>
               </div>
             </draggable>
@@ -57,17 +85,20 @@
             :key="index"
           >
             <div class="row1 flex">
-              <span>{{ item.shootingSessions }}</span>
-              <div class="flex">
+              <span>{{ item.planContent }}</span>
+              <div v-if="!activeProject.banEdit" class="flex">
                 <img
-                  @click="edit(index)"
+                  @click="edit(item)"
                   src="@/assets/img/operatePage/edit.png"
                   alt=""
                 />
                 <div class="more">
                   <img src="@/assets/img/operatePage/more.png" alt="" />
                   <div class="operation_panel">
-                    <div class="panel_item" @click.stop="deleteShooting(index)">
+                    <div
+                      class="panel_item"
+                      @click.stop="deleteShooting(item.id)"
+                    >
                       删除
                     </div>
                   </div>
@@ -75,12 +106,16 @@
               </div>
             </div>
             <div class="row2 flex">
-              <span v-if="item.dateSelect">{{ item.dateSelect }}</span>
-              <span v-if="item.timeSelect">{{ item.timeSelect }}</span>
-              <span v-if="item.timeSlotValue">{{ item.timeSlotValue }}</span>
-              <span>{{ item.scenerySlotValue }}</span>
+              <span v-if="item.startTime">{{
+                dateTypeFormat("YYYY年mm月dd日", new Date(item.startTime))
+              }}</span>
+              <span v-if="item.startTime">{{
+                dateTypeFormat("HH:MM", new Date(item.startTime))
+              }}</span>
+              <span v-if="item.dateType">{{ timeSlot[item.dateType] }}</span>
+              <span>{{ scenerySlot[item.sceneryType] }}</span>
             </div>
-            <div class="row2">{{ item.shootingLocation }}</div>
+            <div class="row2">{{ item.shootAdress }}</div>
             <div class="shot_list">
               <div class="empty_shotList" v-if="item.shotList.length == 0">
                 <img src="@/assets/img/operatePage/dragTips.png" alt="" />
@@ -91,6 +126,7 @@
                 :list="item.shotList"
                 group="items"
                 class="shots_con"
+                :draggable="!activeProject.banEdit"
               >
                 <div
                   class="shots_item flex"
@@ -98,20 +134,68 @@
                   :key="index"
                 >
                   <img
+                    @click="
+                      checkStory(
+                        item2.rowId,
+                        !selectedStory.includes(item2.rowId)
+                      )
+                    "
+                    class="select_area"
+                    :src="
+                      !selectedStory.includes(item2.rowId)
+                        ? require('@/assets/img/operatePage/unselect.png')
+                        : require('@/assets/img/operatePage/seleted.png')
+                    "
+                    alt=""
+                  />
+
+                  <img
+                    v-if="getValue(item2.colObj, '画面')[0]?.fileUrl"
                     class="frameImg"
                     draggable="false"
-                    :src="item2.frame[0]"
+                    :src="getValue(item2.colObj, '画面')[0]?.fileUrl"
                     alt=""
                   />
                   <div class="shot_des">
-                    <span class="nums">{{ item2.nums }}</span
-                    ><span class="content">{{ item2.content }}</span>
+                    <span class="index">镜头{{ item2.sort }}</span
+                    ><span class="content">
+                      {{ getValue(item2.colObj, "内容") }}</span
+                    >
                   </div>
                 </div>
               </draggable>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div v-if="selectedStory.length > 0" class="operation_area flex">
+      <div class="operation_item flex">
+        已选择{{ selectedStory.length }}个项目
+      </div>
+      <div class="operation_item show_list flex">
+        <img src="@/assets/img/operatePage/move.png" alt="" />
+        添加至
+        <div class="transparent_back">
+          <div class="shootingList">
+            <div @click="toMovePlanSort()" class="shootingList_item">
+              未规划的场景
+            </div>
+            <div
+              v-for="(item, index) in shootingList"
+              :key="index"
+              @click="toMovePlanSort(item.id)"
+              class="shootingList_item"
+            >
+              <span>场次</span>{{ item.planContent }}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div @click="selectedStory = []" class="operation_item flex">
+        <img src="@/assets/img/operatePage/cancel.png" alt="" />
+        取消选择
       </div>
     </div>
     <!-- <div v-if="showTips" class="bottom_tips flex">
@@ -134,91 +218,124 @@
     </div> -->
     <NewShootingPlan
       v-if="showShootingPlan"
-      :planIndex="planIndex"
+      :editItem="editItem"
       :OperationType="OperationType"
-      @close="showShootingPlan = false"
+      @close="closeShootingPlan"
     />
   </div>
 </template>
             
-      <script>
+<script>
 import FuncHead from "@/components/FuncHead.vue";
 import NewShootingPlan from "@/components/NewShootingPlan.vue";
 import { mapState, mapMutations } from "vuex";
 import draggable from "vuedraggable";
+import { commonMethods } from "@/assets/js/mixin.js";
+import {
+  shootPlanList,
+  deleteShootPlan,
+  movePlanSort,
+  updatePlanSort,
+} from "@/assets/js/request";
+import { dateTypeFormat } from "@/assets/js/methods";
+import { timeSlot, scenerySlot } from "@/assets/js/data";
 export default {
   components: { FuncHead, NewShootingPlan, draggable },
   computed: {
-    ...mapState(["shootingList"]),
+    ...mapState(["activeProject"]),
   },
   data() {
     return {
-      storyboardList: [
-        //数据列表
-        {
-          id: 1,
-          order: "0-order",
-          nums: "0-nums",
-          frame: [
-            require("@/assets/img/card_1.png"),
-            require("@/assets/img/card_2.png"),
-          ],
-          scenery: "中景",
-          times: 3,
-          content: "几点前几位带我去",
-        },
-        {
-          id: 2,
-          order: "1-order",
-          nums: "1-nums",
-          frame: [
-            require("@/assets/img/card_3.png"),
-            require("@/assets/img/card_4.png"),
-          ],
-          scenery: "远景",
-          times: 2,
-          content: "求稳的群无多七点前无",
-        },
-        {
-          id: 3,
-          order: "2-order",
-          nums: "2-nums",
-          frame: [
-            require("@/assets/img/card_5.png"),
-            require("@/assets/img/card_6.png"),
-          ],
-          scenery: "近景",
-          times: 4,
-          content: "带我去带我去分为",
-        },
-      ],
-      listB: [
-        { id: 3, name: "Item 3" },
-        { id: 4, name: "Item 4" },
-      ],
+      storyboardHead: [], //表头
+      storyboardList: [], //总分镜列表
+      shootingList: [], //拍摄计划列表
       showShootingPlan: false,
-      planIndex: 0, //编辑的计划index值
+      editItem: null, //编辑的计划
       OperationType: "", //"新建"或"编辑"
       showTips: false,
+      selectedStory: [], //选中的分镜id
+      timeSlot: timeSlot,
+      scenerySlot: scenerySlot,
     };
   },
+  mixins: [commonMethods],
   methods: {
-    ...mapMutations(["SET_SHOOTINGLIST"]),
+    checkStory(rowId, toCheck) {
+      if (toCheck) {
+        this.selectedStory.push(rowId);
+      } else {
+        this.selectedStory.splice(this.selectedStory.indexOf(rowId), 1);
+      }
+    },
+    toMovePlanSort(announcePlanId) {
+      movePlanSort({
+        mirrorId: this.selectedStory.join(","), //分镜id
+        announcePlanId: announcePlanId, //拍摄计划id
+      }).then((res) => {
+        this.toGetMirrorList();
+        this.selectedStory = [];
+      });
+    },
     addPlan() {
       this.OperationType = "新建";
       this.showShootingPlan = true;
     },
-    edit(index) {
-      this.planIndex = index;
+    edit(item) {
+      this.editItem = item;
       this.OperationType = "编辑";
       this.showShootingPlan = true;
     },
-    deleteShooting(index) {
-      this.shootingList.splice(index, 1);
-      this.SET_SHOOTINGLIST(this.shootingList);
+    closeShootingPlan(e) {
+      this.showShootingPlan = false;
+      if (e) {
+        this.getShootList();
+      }
+    },
+    deleteShooting(id) {
+      deleteShootPlan({
+        id: id,
+      }).then((res) => {
+        this.getShootList();
+      });
+    },
+    getShootList() {
+      shootPlanList({
+        projectId: this.activeProject.id,
+        sortType: 1,
+      }).then((res) => {
+        this.shootingList = res.data;
+      });
+    },
+    dateTypeFormat(format, time) {
+      return dateTypeFormat(format, time);
     },
   },
-  created() {},
+  computed: {
+    unplannedStoryboardList() {
+      let tempList = [];
+      for (let i = 0; i < this.storyboardList.length; i++) {
+        if (!this.storyboardList[i].announcePlanId) {
+          tempList.push(this.storyboardList[i]);
+        }
+      }
+      for (let i = 0; i < this.shootingList.length; i++) {
+        this.shootingList[i].shotList = [];
+        for (let y = 0; y < this.storyboardList.length; y++) {
+          if (
+            this.storyboardList[y].announcePlanId == this.shootingList[i].id
+          ) {
+            this.shootingList[i].shotList.push(this.storyboardList[y]);
+          }
+        }
+      }
+      console.log(this.shootingList, "this.shootingList[i]");
+      return tempList;
+    },
+  },
+  created() {
+    this.toGetMirrorList();
+    this.getShootList();
+  },
 };
 </script>
       <style lang="scss" scoped>
@@ -231,7 +348,6 @@ export default {
       margin-top: 24px;
       justify-content: space-between;
       .head_title {
-        font-family: PingFang SC, PingFang SC;
         font-weight: 600;
         font-size: 24px;
         color: #3d3d3d;
@@ -249,7 +365,6 @@ export default {
         border-radius: 12px;
         text-align: center;
         line-height: 40px;
-        font-family: PingFang SC, PingFang SC;
         font-weight: 500;
         font-size: 14px;
         color: #ffffff;
@@ -271,8 +386,8 @@ export default {
       min-height: 181px;
       padding: 0 0 23px 16px;
       position: relative;
+      margin-right: 20px;
       .tiltle {
-        font-family: PingFang SC, PingFang SC;
         font-weight: 500;
         font-size: 16px;
         color: #3d3d3d;
@@ -304,7 +419,6 @@ export default {
         display: flex;
         flex-direction: column;
         align-items: center;
-        font-family: PingFang SC, PingFang SC;
         font-weight: 500;
         font-size: 10px;
         color: #a2a2a2;
@@ -317,33 +431,54 @@ export default {
         }
       }
       .shots_con {
-        width: 328px;
+        width: 362px;
         min-height: 136px;
         display: flex;
         flex-direction: column;
+        overflow: auto;
+        max-height: calc(100vh - 300px);
         .shots_item {
           display: flex;
           align-items: flex-start;
           margin-top: 20px;
+          .select_area {
+            width: 16px;
+            height: 16px;
+            align-self: center;
+            margin-right: 13px;
+            cursor: pointer;
+          }
           .frameImg {
             width: 169px;
             height: 94px;
-            margin-right: 14px;
+            flex-shrink: 0;
+          }
+          .empty {
+            width: 169px;
+            height: 94px;
+            background: #f4f6f7;
+            justify-content: center;
+            font-weight: 500;
+            font-size: 14px;
+            color: #959595;
+            flex-shrink: 0;
           }
           .shot_des {
             display: flex;
             flex-direction: column;
-            .nums {
-              font-family: PingFang SC, PingFang SC;
+            margin-left: 14px;
+            .index {
               font-weight: 400;
               font-size: 12px;
               color: #3d3d3d;
             }
             .content {
-              font-family: PingFang SC, PingFang SC;
               font-weight: 500;
               font-size: 14px;
               color: #3d3d3d;
+              overflow: hidden;
+              white-space: nowrap;
+              width: 145px;
             }
           }
         }
@@ -351,21 +486,23 @@ export default {
     }
 
     .plan_list {
-      flex-wrap: wrap;
       align-items: flex-start;
+      overflow: auto;
+      height: calc(100vh - 162px);
       .plan_list_item {
         width: 362px;
         background: #ffffff;
         border-radius: 10px;
-        margin-right: 20px;
+        margin: 0 20px;
         display: flex;
         flex-direction: column;
         padding: 20px 14px 16px 20px;
-        margin-left: 20px;
+        &:first-of-type {
+          margin-left: 0px;
+        }
         .row1 {
           width: 100%;
           justify-content: space-between;
-          font-family: PingFang SC, PingFang SC;
           font-weight: 500;
           font-size: 14px;
           color: #3d3d3d;
@@ -387,8 +524,8 @@ export default {
             .operation_panel {
               display: none;
               position: absolute;
-              top: -45px;
-              left: 10px;
+              top: 24px;
+              right: 0;
               width: 80px;
               background: #ffffff;
               box-shadow: 0px 1px 20px 0px rgba(0, 0, 0, 0.1);
@@ -396,7 +533,6 @@ export default {
               z-index: 3;
               padding: 0 13px 0 25px;
               .panel_item {
-                font-family: PingFang SC, PingFang SC;
                 font-weight: 400;
                 font-size: 14px;
                 color: #3d3d3d;
@@ -408,7 +544,6 @@ export default {
           }
         }
         .row2 {
-          font-family: PingFang SC, PingFang SC;
           font-weight: 500;
           font-size: 10px;
           color: #adadad;
@@ -416,6 +551,64 @@ export default {
           > span {
             margin-right: 8px;
           }
+        }
+      }
+    }
+  }
+  .operation_area {
+    position: fixed;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 386px;
+    height: 40px;
+    background: #ffffff;
+    border-radius: 54px;
+    border: 1px solid #e4e5ee;
+    padding: 0 20px;
+    justify-content: space-between;
+    .operation_item {
+      justify-content: center;
+      font-size: 14px;
+      color: #3d3d3d;
+      cursor: pointer;
+      > img {
+        width: 18px;
+        height: 18px;
+        margin-right: 6px;
+      }
+      .transparent_back {
+        display: none;
+        position: absolute;
+        bottom: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding-bottom: 20px;
+      }
+      .shootingList {
+        background: #ffffff;
+        box-shadow: 0px 1px 20px 0px rgba(0, 0, 0, 0.1);
+        border-radius: 6px;
+        padding: 0 12px;
+
+        .shootingList_item {
+          padding: 0 12px;
+          height: 32px;
+          border-bottom: 1px solid #dedede;
+          word-break: keep-all;
+          line-height: 32px;
+          text-align: center;
+          cursor: pointer;
+          > span {
+            margin-right: 10px;
+          }
+        }
+      }
+    }
+    .show_list {
+      &:hover {
+        .transparent_back {
+          display: block;
         }
       }
     }

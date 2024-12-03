@@ -50,6 +50,11 @@ const routes = [
     name: 'login',
     component: () => import('../views/login.vue')
   },
+  {
+    path: '/share',
+    name: 'share',
+    component: () => import('../views/share.vue')
+  },
   
 ]
 

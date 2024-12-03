@@ -1,6 +1,6 @@
 <template>
   <div class="FuncHead flex">
-    <div class="head_left" @click="$router.push('/')">
+    <div class="head_left flex" @click="$router.push('/')">
       <img
         class="left_arrow"
         src="@/assets/img/operatePage/left_arrow.png"
@@ -21,18 +21,34 @@
         <div v-if="$route.path.includes(item.path)" class="color_block"></div>
       </div>
     </div>
-    <div class="export_btn flex" @click="$router.push('/exportPage')">
-      <img src="@/assets/img/operatePage/export.png" alt="" /> 导出
+    <div class="head_right flex">
+      <img
+        class="message_tips"
+        @click="showMessageNotification"
+        src="@/assets/img/homePage/message_tips.png"
+        alt=""
+      />
+      <div class="export_btn flex" @click="showSharePanel = true">
+        <img src="@/assets/img/operatePage/share.png" alt="" /> 协作
+      </div>
+      <div class="export_btn flex" @click="$router.push('/exportPage')">
+        <img src="@/assets/img/operatePage/export.png" alt="" /> 导出
+      </div>
     </div>
+    <SharePanel v-if="showSharePanel" @close="showSharePanel = false" />
   </div>
 </template>
               
         <script>
 import { mapState } from "vuex";
+import bus from "@/assets/js/eventBus.js";
+import SharePanel from "@/components/SharePanel.vue";
 export default {
-  components: {},
   computed: {
     ...mapState(["activeProject"]),
+  },
+  components: {
+    SharePanel,
   },
   data() {
     return {
@@ -42,6 +58,7 @@ export default {
         { name: "拍摄计划", path: "/shootingPlan" },
         { name: "拍摄通告", path: "/shootingNotice" },
       ],
+      showSharePanel: false,
     };
   },
   methods: {
@@ -49,6 +66,9 @@ export default {
       if (!this.$route.path.includes(path)) {
         this.$router.push(path);
       }
+    },
+    showMessageNotification() {
+      bus.$emit("showMessageNotification", true);
     },
   },
   created() {},
@@ -65,7 +85,6 @@ export default {
   background: #fff;
   padding: 0 32px;
   .head_left {
-    font-family: PingFang SC, PingFang SC;
     font-weight: 600;
     font-size: 16px;
     color: #3d3d3d;
@@ -87,7 +106,6 @@ export default {
       display: flex;
       flex-direction: column;
       align-items: center;
-      font-family: PingFang SC, PingFang SC;
       font-weight: 500;
       font-size: 14px;
       color: #959595;
@@ -107,22 +125,31 @@ export default {
       color: #3d3d3d;
     }
   }
-  .export_btn {
-    width: 80px;
-    height: 32px;
-    background: #ffffff;
-    border-radius: 54px;
-    border: 1px solid #e4e5ee;
-    font-family: PingFang SC, PingFang SC;
-    font-weight: 400;
-    font-size: 14px;
-    color: #3d3d3d;
-    justify-content: center;
-    cursor: pointer;
-    img {
-      width: 18px;
-      height: 18px;
-      margin-right: 5px;
+  .head_right {
+    > * {
+      margin-left: 14px;
+    }
+    .message_tips {
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+    }
+    .export_btn {
+      width: 80px;
+      height: 32px;
+      background: #ffffff;
+      border-radius: 54px;
+      border: 1px solid #e4e5ee;
+      font-weight: 400;
+      font-size: 14px;
+      color: #3d3d3d;
+      justify-content: center;
+      cursor: pointer;
+      img {
+        width: 18px;
+        height: 18px;
+        margin-right: 5px;
+      }
     }
   }
 }

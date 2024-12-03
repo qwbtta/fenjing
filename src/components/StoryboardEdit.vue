@@ -2,8 +2,13 @@
   <div class="StoryboardEdit flex">
     <div class="edit_panel">
       <div class="panel_head flex">
-        <span>故事版编辑</span
-        ><span class="close" @click="$emit('close')">x</span>
+        <span>故事版编辑</span>
+        <img
+          class="close"
+          @click="$emit('close')"
+          src="@/assets/img/operatePage/close.png"
+          alt=""
+        />
       </div>
       <div class="subtitle">画面</div>
 
@@ -148,7 +153,6 @@ export default {
     width: 204px;
     height: 32px;
     border-radius: 5px;
-    font-family: PingFang SC, PingFang SC;
     font-weight: 400;
     font-size: 12px;
     color: #3d3d3d;
@@ -164,7 +168,6 @@ export default {
     border: 1px solid #e4e5ee;
     outline: none;
     padding: 0 12px;
-    font-family: PingFang SC, PingFang SC;
     font-weight: 400;
     font-size: 12px;
     color: #3d3d3d;
@@ -180,19 +183,19 @@ export default {
     border-radius: 18px;
     padding: 0 11px 31px 18px;
     .panel_head {
-      font-family: PingFang SC, PingFang SC;
       font-weight: 500;
       font-size: 16px;
       color: #3d3d3d;
       margin-top: 28px;
       justify-content: space-between;
       .close {
+        width: 20px;
+        height: 20px;
         margin-right: 4px;
         cursor: pointer;
       }
     }
     .subtitle {
-      font-family: PingFang SC, PingFang SC;
       font-weight: 500;
       font-size: 14px;
       color: #3d3d3d;
@@ -234,7 +237,6 @@ export default {
             width: 34px;
             display: flex;
             flex-direction: column;
-            font-family: PingFang SC, PingFang SC;
             font-weight: 400;
             font-size: 10px;
             color: #ffffff;

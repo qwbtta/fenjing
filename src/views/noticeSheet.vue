@@ -36,7 +36,9 @@
       <div class="footer_btn" @click="goPrevious" v-if="canGoPrevious">
         上一步
       </div>
-      <div class="footer_btn" @click="goShootingNotice">存储并退出</div>
+      <div class="footer_btn" @click="goShootingNotice">
+        {{ activeProject.banEdit ? "退出" : "存储并退出" }}
+      </div>
       <div class="footer_btn" @click="goNext" v-if="canGoNext">下一步</div>
     </div>
     <NoticeCreate v-if="activeIndex == 0" />
@@ -50,10 +52,11 @@ import { mapState, mapMutations } from "vuex";
 import NoticeCreate from "@/components/shootingNotice/NoticeCreate.vue";
 import NoticeImprove from "@/components/shootingNotice/NoticeImprove.vue";
 import NoticePlan from "@/components/shootingNotice/NoticePlan.vue";
+import { updateShootAnnounce } from "@/assets/js/request";
 export default {
   components: { NoticeCreate, NoticeImprove, NoticePlan },
   computed: {
-    ...mapState(["noticeList", "activeNotice"]),
+    ...mapState(["noticeList", "activeNotice", "activeProject"]),
     canGoPrevious() {
       return this.activeIndex !== 0;
     },
@@ -70,28 +73,38 @@ export default {
   methods: {
     ...mapMutations(["SET_NOTICELIST", "SET_ACTIVENOTICE"]),
     goShootingNotice() {
-      if (!this.activeNotice.form1.title) {
+      if (!this.activeNotice.shootAnnounce.announceName) {
         this.$message({
           message: "请填写通告标题",
           type: "error",
         });
         return;
       }
-      if (!this.activeNotice.form1.dateSelect) {
+      if (!this.activeNotice.shootAnnounce.announceTime) {
         this.$message({
           message: "请填写拍摄日期",
           type: "error",
         });
         return;
       }
-      for (let i = 0; i < this.noticeList.length; i++) {
-        if (this.noticeList[i].id == this.activeNotice.id) {
-          this.noticeList[i] = this.activeNotice;
-          break;
-        }
+      let params = this.activeNotice;
+      // if (
+      //   params.shootAnnounceMemberList.length == 1 &&
+      //   !params.shootAnnounceMemberList[0].memberName &&
+      //   !params.shootAnnounceMemberList[0].memberType
+      // )
+      //   params.shootAnnounceMemberList = [];
+      // if (!params.shootGroupAnnounceList) params.shootGroupAnnounceList = [];
+      // if (!params.shootAnnouncePlanList) params.shootAnnouncePlanList = [];
+      // if (!params.shootAnnounceOtherPlanList)
+      //   params.shootAnnounceOtherPlanList = [];
+      if (this.activeProject.banEdit) {
+        this.$router.push("/shootingNotice");
+        return;
       }
-      this.SET_NOTICELIST(this.noticeList);
-      this.$router.push("/shootingNotice");
+      updateShootAnnounce(params).then((res) => {
+        this.$router.push("/shootingNotice");
+      });
     },
     goPrevious() {
       if (this.canGoPrevious) {
@@ -104,7 +117,9 @@ export default {
       }
     },
   },
-  created() {},
+  created() {
+    console.log(this.activeNotice, "this.activeNotice");
+  },
 };
 </script><style lang="scss" scoped>
 .noticeSheet {
@@ -119,7 +134,6 @@ export default {
     height: 50px;
     border-bottom: 1px solid #dedede;
     background: #fff;
-    font-family: PingFang SC, PingFang SC;
     font-weight: 600;
     font-size: 16px;
     color: #3d3d3d;
@@ -159,7 +173,6 @@ export default {
         width: 30px;
         height: 30px;
         border-radius: 50%;
-        font-family: PingFang SC, PingFang SC;
         font-weight: 500;
         font-size: 16px;
         color: rgba(0, 0, 0, 0.45);
@@ -168,7 +181,6 @@ export default {
         line-height: 30px;
       }
       .step_name {
-        font-family: PingFang SC, PingFang SC;
         font-weight: 400;
         font-size: 14px;
         color: rgba(0, 0, 0, 0.45);
@@ -214,7 +226,6 @@ export default {
       text-align: center;
       line-height: 38px;
       margin-left: 16px;
-      font-family: PingFang SC, PingFang SC;
       font-weight: 500;
       font-size: 14px;
       color: #ffffff;

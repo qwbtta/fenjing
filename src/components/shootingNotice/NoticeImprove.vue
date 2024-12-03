@@ -13,14 +13,16 @@
           </div>
           <div
             class="info_row flex"
-            v-for="(item, index) in form2.groupNotice.groupList"
+            v-for="(item, index) in form2"
             :key="index"
+            v-show="item.type == 0 && item.isDelete == '0'"
           >
             <el-select
               style="width: 165px; margin-right: 14px"
-              v-model="item.name"
+              v-model="item.groupName"
               placeholder="请选择"
               :popper-append-to-body="false"
+              :disabled="activeProject.banEdit"
             >
               <el-option
                 v-for="item in options"
@@ -34,29 +36,41 @@
               style="width: 236px"
               type="text"
               placeholder="请输入"
-              v-model="item.place"
+              v-model="item.groupAdress"
+              :readonly="activeProject.banEdit"
             />
             <el-time-picker
               style="width: 236px"
-              v-model="item.time"
+              v-model="item.arriveTime"
               placeholder="选择时间"
               format="HH:mm"
-              value-format="HH:mm"
               :clearable="false"
+              :readonly="activeProject.banEdit"
             >
             </el-time-picker>
+
+            <div
+              v-if="!activeProject.banEdit"
+              class="deleteMember flex"
+              @click="item.isDelete = '1'"
+            >
+              <img src="@/assets/img/homePage/recycle_bin.png" alt="" />
+            </div>
           </div>
           <img
-            @click="addRow('groupNotice', 'groupList')"
+            v-if="!activeProject.banEdit"
+            @click="addRow('0')"
             class="add_row"
             src="@/assets/img/operatePage/add_row.png"
             alt=""
           />
           <div class="subtitle">备注</div>
           <input
+            @input="setNotes(false, $event)"
             type="text"
             placeholder="请输入"
-            v-model="form2.groupNotice.groupNotes"
+            v-model="groupNotes"
+            :readonly="activeProject.banEdit"
           />
         </div>
       </div>
@@ -79,14 +93,16 @@
           </div>
           <div
             class="info_row flex"
-            v-for="(item, index) in form2.actorNotice.actorList"
+            v-for="(item, index) in form2"
             :key="index"
+            v-show="item.type == 1 && item.isDelete == '0'"
           >
             <el-select
               style="width: 165px; margin-right: 14px"
-              v-model="item.name"
+              v-model="item.groupName"
               placeholder="请选择"
               :popper-append-to-body="false"
+              :disabled="activeProject.banEdit"
             >
               <el-option
                 v-for="item in options"
@@ -100,37 +116,44 @@
               style="width: 236px"
               type="text"
               placeholder="请输入"
-              v-model="item.place"
+              v-model="item.groupAdress"
+              :readonly="activeProject.banEdit"
             />
             <el-time-picker
               style="width: 236px"
-              v-model="item.time"
+              v-model="item.arriveTime"
               placeholder="选择时间"
               format="HH:mm"
-              value-format="HH:mm"
               :clearable="false"
+              :readonly="activeProject.banEdit"
             >
             </el-time-picker>
+
+            <div
+              v-if="!activeProject.banEdit"
+              class="deleteMember flex"
+              @click="item.isDelete = '1'"
+            >
+              <img src="@/assets/img/homePage/recycle_bin.png" alt="" />
+            </div>
           </div>
           <img
-            @click="addRow('actorNotice', 'actorList')"
+            @click="addRow('1')"
             class="add_row"
             src="@/assets/img/operatePage/add_row.png"
             alt=""
+            v-if="!activeProject.banEdit"
           />
           <div class="subtitle">备注</div>
           <input
+            @input="setNotes(true, $event)"
             type="text"
             placeholder="请输入"
-            v-model="form2.actorNotice.actorNotes"
+            v-model="actorNotes"
+            :readonly="activeProject.banEdit"
           />
         </div>
       </div>
-      <!-- <span
-          v-if="index !== 0"
-           @click="form2.actorNotice.actorList.splice(index, 1)"
-          >删除</span
-        > -->
     </div>
   </div>
 </template>
@@ -140,32 +163,13 @@ import { mapState, mapMutations } from "vuex";
 export default {
   components: {},
   computed: {
-    ...mapState(["activeNotice"]),
+    ...mapState(["activeNotice", "activeProject"]),
   },
   data() {
     return {
-      form2: {
-        groupNotice: {
-          groupList: [
-            {
-              name: "",
-              place: "",
-              time: "",
-            },
-          ],
-          groupNotes: "",
-        },
-        actorNotice: {
-          actorList: [
-            {
-              name: "",
-              place: "",
-              time: "",
-            },
-          ],
-          actorNotes: "",
-        },
-      },
+      form2: [],
+      groupNotes: "",
+      actorNotes: "",
       options: [
         {
           value: "导演",
@@ -183,21 +187,70 @@ export default {
       value: "导演",
     };
   },
+  watch: {
+    form2: {
+      handler: function (newVal, oldVal) {
+        this.activeNotice.shootGroupAnnounceList = newVal;
+        this.SET_ACTIVENOTICE(this.activeNotice);
+      },
+      deep: true,
+    },
+  },
   methods: {
     ...mapMutations(["SET_NOTICELIST", "SET_ACTIVENOTICE"]),
-    addRow(groupName, listName) {
-      this.form2[groupName][listName].push({
-        name: "",
-        place: "",
-        time: "",
+    addRow(type) {
+      this.form2.push({
+        id: null,
+        projectId: this.activeProject.id,
+        announceId: this.activeNotice.shootAnnounce.id,
+        groupName: "", // 分组名称
+        groupAdress: "",
+        arriveTime: "", //到达时间
+        remark: "",
+        type: type, // 0分组通告  1演员通告
+        status: "0",
+        isDelete: "0",
       });
-      this.SET_ACTIVENOTICE(this.activeNotice);
+      // this.SET_ACTIVENOTICE(this.activeNotice);
+    },
+
+    setNotes(isActor, e) {
+      //接口数据设计问题  只能这么手动弄下
+      for (let i = 0; i < this.form2.length; i++) {
+        if (
+          (isActor && this.form2[i].type == 1) ||
+          (!isActor && this.form2[i].type == 0)
+        ) {
+          this.form2[i].remark = e.target.value;
+        }
+      }
     },
   },
   created() {
-    if (this.activeNotice.form2.groupNotice) {
-      this.form2 = this.activeNotice.form2;
+    //接口数据设计的上传一个数组  回来两个数组  只能手动调整下
+    // if (this.activeNotice.shootGroupAnnounceList.length == 0) {
+    //   this.addRow("0");
+    // }
+    // console.log(this.activeNotice, "this.activeNotice");
+    // if (this.activeNotice.shootActorGroupAnnounceList.length == 0) {
+    //   this.addRow("1");
+    // }
+    this.form2 = [
+      ...this.form2,
+      ...JSON.parse(JSON.stringify(this.activeNotice.shootGroupAnnounceList)),
+      ...JSON.parse(
+        JSON.stringify(this.activeNotice.shootActorGroupAnnounceList)
+      ),
+    ];
+    for (let i = 0; i < this.form2.length; i++) {
+      if (this.form2[i].type == 1) {
+        this.actorNotes = this.form2[i]?.remark;
+      }
+      if (this.form2[i].type == 0) {
+        this.groupNotes = this.form2[i]?.remark;
+      }
     }
+    console.log(this.form2, "this.form2");
   },
 };
 </script>
@@ -214,7 +267,6 @@ input {
   border: 1px solid #e4e5ee;
   outline: none;
   padding: 0 12px;
-  font-family: PingFang SC, PingFang SC;
   font-weight: 400;
   font-size: 12px;
   color: #3d3d3d;
@@ -226,7 +278,6 @@ input {
 ::v-deep .el-input__inner {
   height: 32px;
   border-radius: 5px;
-  font-family: PingFang SC, PingFang SC;
   font-weight: 400;
   font-size: 12px;
   color: #3d3d3d;
@@ -241,13 +292,11 @@ input {
   margin-right: 70px;
   padding-top: 20px;
   .title {
-    font-family: PingFang SC, PingFang SC;
     font-weight: 500;
     font-size: 16px;
     color: #3d3d3d;
   }
   .des {
-    font-family: PingFang SC, PingFang SC;
     font-weight: 400;
     font-size: 12px;
     color: #959595;
@@ -258,10 +307,10 @@ input {
 .box_right {
   display: flex;
   flex-direction: column;
+  min-width: 665px;
   .subtitle {
     margin-top: 20px;
     margin-bottom: 10px;
-    font-family: PingFang SC, PingFang SC;
     font-weight: 500;
     font-size: 14px;
     color: #3d3d3d;
@@ -273,6 +322,22 @@ input {
   }
   .info_row {
     margin-top: 10px;
+    position: relative;
+    .deleteMember {
+      position: absolute;
+      right: -36px;
+      top: 4px;
+      width: 26px;
+      height: 26px;
+      background: #ededed;
+      border-radius: 50%;
+      justify-content: center;
+      cursor: pointer;
+      > img {
+        width: 16px;
+        height: 16px;
+      }
+    }
   }
   .add_row {
     width: 26px;

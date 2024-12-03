@@ -14,7 +14,7 @@
         </div>
       </div>
       <div class="add_con flex">
-        <div class="inner flex" @click="showPreFilled = true">
+        <div class="inner flex" @click="toShowPreFilled">
           <img src="@/assets/img/operatePage/add_2.png" alt="" /><span
             >创建通告</span
           >
@@ -28,19 +28,24 @@
           :key="index"
           @click="goNoticeSheet(item)"
         >
-          <div class="color_block"></div>
-          <span class="title">{{ item.form1.title }}</span>
+          <div class="color_block flex">未添加图片</div>
+          <span class="title">{{ item.announceName }}</span>
           <div class="dateSelect_con flex">
             <span class="special">开机日期</span
-            ><span class="dateSelect">{{ item.form1.dateSelect }}</span>
+            ><span class="dateSelect">{{
+              dateTypeFormat("YYYY年mm月dd日", new Date(item.announceTime))
+            }}</span>
             <div class="more">
               <img src="@/assets/img/homePage/more.png" alt="" />
-              <div class="operation_panel">
-                <div class="panel_item" @click.stop="deleteNotice(item)">
-                  删除
-                </div>
+              <div @click.stop class="operation_panel">
+                <div class="panel_item" @click="deleteNotice(item)">删除</div>
               </div>
             </div>
+            <img
+              class="status"
+              src="@/assets/img/operatePage/unexecuted.png"
+              alt=""
+            />
           </div>
         </div>
       </div>
@@ -52,23 +57,32 @@
           :key="index"
           @click="goNoticeSheet(item)"
         >
-          <div class="color_block"></div>
-          <span class="title">{{ item.form1.title }}</span>
+          <div class="color_block flex">未添加图片</div>
+          <span class="title">{{ item.announceName }}</span>
           <div class="dateSelect_con flex">
             <span class="special">开机日期</span
-            ><span class="dateSelect">{{ item.form1.dateSelect }}</span>
+            ><span class="dateSelect">{{
+              dateTypeFormat("YYYY年mm月dd日", new Date(item.announceTime))
+            }}</span>
             <div class="more">
               <img src="@/assets/img/homePage/more.png" alt="" />
-              <div class="operation_panel">
-                <div class="panel_item" @click.stop="deleteNotice(item)">
-                  删除
-                </div>
+              <div @click.stop class="operation_panel">
+                <div class="panel_item" @click="deleteNotice(item)">删除</div>
               </div>
             </div>
+            <img
+              class="status"
+              src="@/assets/img/operatePage/expired .png"
+              alt=""
+            />
           </div>
         </div>
       </div>
-      <PreFilled v-if="showPreFilled" @close="showPreFilled = false" />
+      <PreFilled
+        v-if="showPreFilled"
+        @close="showPreFilled = false"
+        @getList="getShootAnnounceList()"
+      />
     </div>
   </div>
 </template>
@@ -77,54 +91,69 @@
 import FuncHead from "@/components/FuncHead.vue";
 import PreFilled from "@/components/PreFilled.vue";
 import { mapState, mapMutations } from "vuex";
+import {
+  shootAnnounceList,
+  announceInfo,
+  deleteShootAnnounce,
+} from "@/assets/js/request";
+import { dateTypeFormat } from "@/assets/js/methods";
 export default {
   components: { FuncHead, PreFilled },
   data() {
     return {
       showPreFilled: false,
+      unfinishedList: [],
+      overdueList: [],
     };
   },
   computed: {
-    ...mapState(["noticeList", "activeNotice"]),
-    unfinishedList() {
-      let now = Date.now().toString();
-      let tempList = [];
-      for (let i = 0; i < this.noticeList.length; i++) {
-        if (this.noticeList[i].form1.timeStamp + 86400000 > now) {
-          tempList.push(this.noticeList[i]);
-        }
-      }
-      return tempList;
-    },
-    overdueList() {
-      let now = Date.now().toString();
-      let tempList = [];
-      for (let i = 0; i < this.noticeList.length; i++) {
-        if (this.noticeList[i].form1.timeStamp + 86400000 <= now) {
-          tempList.push(this.noticeList[i]);
-        }
-      }
-      return tempList;
-    },
+    ...mapState(["noticeList", "activeNotice", "activeProject"]),
   },
   methods: {
     ...mapMutations(["SET_NOTICELIST", "SET_ACTIVENOTICE"]),
+    getShootAnnounceList() {
+      shootAnnounceList({ projectId: this.activeProject.id }).then((res) => {
+        this.overdueList = res.data.announced;
+        this.unfinishedList = res.data.announcing;
+      });
+    },
     goNoticeSheet(item) {
-      this.SET_ACTIVENOTICE(item);
-      this.$router.push("/noticeSheet");
+      announceInfo({ announceId: item.id }).then((res) => {
+        if (res.code == 200) {
+          this.SET_ACTIVENOTICE(res.data);
+          this.$router.push("/noticeSheet");
+        } else {
+          this.$message({
+            message: "请求错误",
+            type: "error",
+          });
+        }
+      });
     },
     deleteNotice(item) {
-      for (let i = 0; i < this.noticeList.length; i++) {
-        if (this.noticeList[i].id == item.id) {
-          this.noticeList.splice(i, 1);
-          break;
-        }
+      deleteShootAnnounce({
+        id: item.id,
+      }).then((res) => {
+        this.getShootAnnounceList();
+      });
+    },
+    dateTypeFormat(format, time) {
+      return dateTypeFormat(format, time);
+    },
+    toShowPreFilled() {
+      if (this.activeProject.banEdit) {
+        this.$message({
+          message: "当前无编辑权限",
+          type: "error",
+        });
+        return;
       }
-      this.SET_NOTICELIST(this.noticeList);
+      this.showPreFilled = true;
     },
   },
   mounted() {
     console.log(this.noticeList, "noticeList");
+    this.getShootAnnounceList();
   },
 };
 </script>
@@ -138,7 +167,6 @@ export default {
       margin-top: 24px;
       justify-content: space-between;
       .head_title {
-        font-family: PingFang SC, PingFang SC;
         font-weight: 600;
         font-size: 24px;
         color: #3d3d3d;
@@ -156,7 +184,6 @@ export default {
         border-radius: 12px;
         text-align: center;
         line-height: 40px;
-        font-family: PingFang SC, PingFang SC;
         font-weight: 500;
         font-size: 14px;
         color: #ffffff;
@@ -181,7 +208,6 @@ export default {
           margin-right: 4px;
         }
         span {
-          font-family: PingFang SC, PingFang SC;
           font-weight: 400;
           font-size: 14px;
           color: #3d3d3d;
@@ -191,7 +217,6 @@ export default {
     .subtitle {
       margin-top: 30px;
       margin-bottom: 24px;
-      font-family: PingFang SC, PingFang SC;
       font-weight: 600;
       font-size: 16px;
       color: #3d3d3d;
@@ -209,26 +234,29 @@ export default {
         display: flex;
         flex-direction: column;
         padding: 9px;
+        position: relative;
         .color_block {
           width: 258px;
           height: 134px;
           background: #f4f6f7;
+          justify-content: center;
+          font-weight: 500;
+          font-size: 14px;
+          color: #959595;
+          user-select: none;
         }
         .title {
-          font-family: PingFang SC, PingFang SC;
           font-weight: 500;
           font-size: 14px;
           color: #3d3d3d;
           margin-top: 20px;
         }
         .dateSelect_con {
-          font-family: PingFang SC, PingFang SC;
           font-weight: 500;
           font-size: 14px;
           color: #3d3d3d;
           margin-top: 17px;
           .special {
-            font-family: PingFang SC, PingFang SC;
             font-weight: 400;
             font-size: 12px;
             color: #959595;
@@ -264,7 +292,6 @@ export default {
               z-index: 3;
               padding: 0 13px 0 25px;
               .panel_item {
-                font-family: PingFang SC, PingFang SC;
                 font-weight: 400;
                 font-size: 14px;
                 color: #3d3d3d;
@@ -273,6 +300,13 @@ export default {
                 cursor: pointer;
               }
             }
+          }
+          .status {
+            width: 76px;
+            height: 60px;
+            position: absolute;
+            right: 8px;
+            bottom: 50px;
           }
         }
       }

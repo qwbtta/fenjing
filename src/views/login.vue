@@ -1,7 +1,8 @@
 <template>
   <div class="login flex">
     <div class="main_con">
-      <div class="close">x</div>
+      <img class="close" src="@/assets/img/operatePage/close.png" alt="" />
+      <img class="logo" src="@/assets/img/homePage/logo.png" alt="" />
       <div class="main">
         <div class="tab_list flex">
           <div
@@ -14,14 +15,21 @@
             {{ item }}
           </div>
         </div>
-
-        <div class="SMS_login column" v-if="'短信登录' == activeTab">
-          <input type="text" class="input" placeholder="请输入手机号" />
+        <!-- v-if="'短信登录' == activeTab" -->
+        <div class="SMS_login column">
+          <input
+            type="text"
+            class="input"
+            placeholder="请输入手机号"
+            v-model="phoneNumber"
+          />
           <div class="verification_code_con">
             <input type="text" class="input" placeholder="请输入验证码" />
-            <div class="get_code" @click="getcode">获取验证码</div>
+            <div class="get_code" @click="toGetcode">
+              {{ timer ? countDown + "s" : "获取验证码" }}
+            </div>
           </div>
-          <div class="login_btn" @click="loginWithCode">登录</div>
+          <div class="login_btn" @click="toLoginWithCode">登录</div>
           <div class="tips_con">
             <div class="select"></div>
             <span class="tips"
@@ -31,11 +39,7 @@
               >和<span class="special_span">隐私权条款</span></span
             >
           </div>
-          <button @click="login">登录</button>
         </div>
-        <!-- 
-        <button @click="getcode">发送验证注册</button>
-        <button @click="loginWithCode">验证码登录</button> -->
       </div>
     </div>
   </div>
@@ -47,25 +51,38 @@ export default {
   components: {},
   data() {
     return {
+      phoneNumber: "",
       code: "",
       isRegist: false,
       tabList: ["短信登录", "账号登录", "扫码登录"],
       activeTab: "短信登录",
+      timer: null,
+      countDown: 60,
     };
   },
   methods: {
-    login() {
+    toGetcode() {
+      const phoneReg = /^[1][3,4,5,6,7,8,9][0-9]{9}$/;
+
+      if (!phoneReg.test(this.phoneNumber)) {
+        this.$message({
+          message: "请输入正确的手机号码",
+          type: "warning",
+        });
+        return;
+      }
+
+      if (this.timer) return;
+      this.countDown = 60;
+      this.timer = setInterval(() => {
+        this.countDown -= 1;
+        if (0 == this.countDown) {
+          clearInterval(this.timer);
+          this.timer = null;
+        }
+      }, 1000);
       let params = {
-        tel: "18383866864",
-        password: "849746",
-      };
-      login(params).then((res) => {
-        localStorage.setItem("token", res.token);
-      });
-    },
-    getcode() {
-      let params = {
-        tel: "18383866864",
+        tel: this.phoneNumber,
       };
       getCode(params).then((res) => {
         if (res.code == 200) {
@@ -79,20 +96,41 @@ export default {
         }
       });
     },
-    loginWithCode() {
+    toLoginWithCode() {
+      const phoneReg = /^[1][3,4,5,6,7,8,9][0-9]{9}$/;
+      if (!phoneReg.test(this.phoneNumber) || !this.code) {
+        this.$message({
+          message: "请输入正确的手机号码和验证码！",
+          type: "error",
+        });
+        return;
+      }
       let params = {
-        tel: "18383866864",
+        tel: this.phoneNumber,
         code: this.code,
       };
       if (!this.isRegist) {
-        params.password = "849746";
+        params.password =
+          this.phoneNumber == "18383866864" ? "849746" : "123456";
       }
       loginWithCode(params).then((res) => {
-        localStorage.setItem("token", res.token);
+        if (res.token) {
+          localStorage.setItem("token", res.token);
+          // localStorage.setItem("userInfo", res.data);
+          this.$router.push("/");
+        } else {
+          this.$message({
+            message: "登录失败",
+            type: "error",
+          });
+        }
       });
     },
   },
   created() {},
+  destroyed() {
+    clearInterval(this.timer);
+  },
 };
 </script>
 <style lang="scss" scoped>
@@ -113,18 +151,26 @@ export default {
     border-radius: 8px;
     position: relative;
     .close {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       position: absolute;
       right: 13px;
       top: 13px;
+      cursor: pointer;
+    }
+    .logo {
+      display: block;
+      width: 174px;
+      height: 40px;
+      margin: 54px auto 38px;
     }
     .main {
       width: 276px;
       height: 286px;
       background: #ffffff;
       border-radius: 8px;
-      margin: 132px auto 0;
+      margin: 0 auto;
+
       .tab_list {
         .tab_item {
           width: 92px;

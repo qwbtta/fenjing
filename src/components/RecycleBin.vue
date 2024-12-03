@@ -1,6 +1,6 @@
 <template>
-  <div class="RecycleBin">
-    <div class="main">
+  <div @click="$emit('close')" class="RecycleBin">
+    <div @click.stop class="main">
       <div class="head flex">
         <span class="close" @click="$emit('close')">→</span>
         <span class="middle_span">回收站</span>

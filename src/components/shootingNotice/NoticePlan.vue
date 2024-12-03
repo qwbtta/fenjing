@@ -13,14 +13,17 @@
           </div>
           <div
             class="info_row flex"
-            v-for="(item, index) in form3.planList"
+            v-for="(item, index) in form3"
             :key="index"
+            v-show="item.isDelete == '0' || !item.isDelete"
           >
             <el-select
               style="width: 165px; margin-right: 14px"
-              v-model="item.name"
+              v-model="item.planId"
               placeholder="请选择"
               :popper-append-to-body="false"
+              @change="change($event, index)"
+              :disabled="activeProject.banEdit"
             >
               <el-option
                 v-for="item in options"
@@ -30,23 +33,49 @@
               >
               </el-option>
             </el-select>
-            <input
-              style="width: 236px"
-              type="text"
-              placeholder="请输入"
-              v-model="item.place"
-            />
+            <el-select
+              style="width: 90px; margin-right: 14px"
+              v-model="item.sceneryType"
+              placeholder="内/外景"
+              :popper-append-to-body="false"
+              :disabled="activeProject.banEdit"
+            >
+              <el-option
+                v-for="item in sceneryOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              >
+              </el-option>
+            </el-select>
             <el-time-picker
-              style="width: 236px"
-              v-model="item.time"
-              placeholder="选择时间"
+              style="width: 118px; margin-right: 14px"
+              v-model="item.startTime"
+              placeholder="开始时间"
               format="HH:mm"
-              value-format="HH:mm"
               :clearable="false"
+              :readonly="activeProject.banEdit"
             >
             </el-time-picker>
+            <el-time-picker
+              style="width: 118px"
+              v-model="item.endTime"
+              placeholder="结束时间"
+              format="HH:mm"
+              :clearable="false"
+              :readonly="activeProject.banEdit"
+            >
+            </el-time-picker>
+            <div
+              v-if="!activeProject.banEdit"
+              class="deleteMember flex"
+              @click="item.isDelete = '1'"
+            >
+              <img src="@/assets/img/homePage/recycle_bin.png" alt="" />
+            </div>
           </div>
           <img
+            v-if="!activeProject.banEdit"
             @click="addRow"
             class="add_row"
             src="@/assets/img/operatePage/add_row.png"
@@ -56,69 +85,102 @@
           <input
             type="text"
             placeholder="请输入"
-            v-model="form3.planList.notes"
+            v-model="notes"
+            :readonly="activeProject.banEdit"
           />
         </div>
       </div>
-      <!-- <span
-          v-if="index !== 0"
-          @click="form2.groupNotice.groupList.splice(index, 1)"
-          >删除</span
-        > -->
     </div>
   </div>
 </template>
               
         <script>
 import { mapState, mapMutations } from "vuex";
+import { shootPlanList } from "@/assets/js/request";
+import { timeSlot, scenerySlot } from "@/assets/js/data";
 export default {
   components: {},
   computed: {
-    ...mapState(["activeNotice"]),
+    ...mapState(["activeNotice", "activeProject"]),
   },
   data() {
     return {
-      form3: {
-        planList: [
-          {
-            name: "",
-            place: "",
-            time: "",
-            notes: "",
-          },
-        ],
-      },
-      options: [
+      form3: [],
+      notes: "",
+      options: [],
+      sceneryOptions: [
         {
-          value: "导演",
-          label: "导演",
+          value: "0",
+          label: "内景",
         },
         {
-          value: "摄影",
-          label: "摄影",
-        },
-        {
-          value: "制片",
-          label: "制片",
+          value: "1",
+          label: "外景",
         },
       ],
-      value: "导演",
+      shootingList: [],
     };
+  },
+  watch: {
+    form3: {
+      handler: function (newVal, oldVal) {
+        this.activeNotice.shootAnnouncePlanList = newVal;
+        this.SET_ACTIVENOTICE(this.activeNotice);
+        console.log(this.activeNotice, "this.activeNotice");
+      },
+      deep: true,
+    },
   },
   methods: {
     ...mapMutations(["SET_NOTICELIST", "SET_ACTIVENOTICE"]),
     addRow() {
-      this.form3.planList.push({
-        name: "",
-        place: "",
-        time: "",
+      this.form3.push({
+        id: null,
+        projectId: this.activeProject.id,
+        planId: "", // (和拍摄计划关联id)
+        announceId: this.activeNotice.shootAnnounce.id,
       });
-      this.SET_ACTIVENOTICE(this.activeNotice);
+    },
+    change(e, index) {
+      for (let i = 0; i < this.shootingList.length; i++) {
+        if (this.shootingList[i].id == e) {
+          this.form3[index].type = "1";
+          this.$set(
+            this.form3[index],
+            "sceneryType",
+            this.shootingList[i].sceneryType
+          );
+          this.$set(
+            this.form3[index],
+            "startTime",
+            this.shootingList[i].startTime
+          );
+          this.$set(this.form3[index], "endTime", this.shootingList[i].endTime);
+        }
+      }
+    },
+    getShootList() {
+      shootPlanList({
+        projectId: this.activeProject.id,
+        sortType: 1,
+      }).then((res) => {
+        this.shootingList = res.data;
+        this.options = [];
+        for (let i = 0; i < res.data.length; i++) {
+          let item = {
+            value: res.data[i].id,
+            label: res.data[i].planContent,
+          };
+          this.options.push(item);
+        }
+      });
     },
   },
   created() {
-    if (this.activeNotice.form3.planList) {
-      this.form3 = this.activeNotice.form3;
+    this.getShootList();
+    this.form3 = this.activeNotice.shootAnnouncePlanList;
+    if (this.activeNotice.shootAnnouncePlanList.length == 0) {
+      this.addRow();
     }
   },
 };
@@ -136,7 +198,6 @@ input {
   border: 1px solid #e4e5ee;
   outline: none;
   padding: 0 12px;
-  font-family: PingFang SC, PingFang SC;
   font-weight: 400;
   font-size: 12px;
   color: #3d3d3d;
@@ -148,7 +209,6 @@ input {
 ::v-deep .el-input__inner {
   height: 32px;
   border-radius: 5px;
-  font-family: PingFang SC, PingFang SC;
   font-weight: 400;
   font-size: 12px;
   color: #3d3d3d;
@@ -163,13 +223,11 @@ input {
   margin-right: 70px;
   padding-top: 20px;
   .title {
-    font-family: PingFang SC, PingFang SC;
     font-weight: 500;
     font-size: 16px;
     color: #3d3d3d;
   }
   .des {
-    font-family: PingFang SC, PingFang SC;
     font-weight: 400;
     font-size: 12px;
     color: #959595;
@@ -183,7 +241,6 @@ input {
   .subtitle {
     margin-top: 20px;
     margin-bottom: 10px;
-    font-family: PingFang SC, PingFang SC;
     font-weight: 500;
     font-size: 14px;
     color: #3d3d3d;
@@ -195,6 +252,22 @@ input {
   }
   .info_row {
     margin-top: 10px;
+    position: relative;
+    .deleteMember {
+      position: absolute;
+      right: -36px;
+      top: 4px;
+      width: 26px;
+      height: 26px;
+      background: #ededed;
+      border-radius: 50%;
+      justify-content: center;
+      cursor: pointer;
+      > img {
+        width: 16px;
+        height: 16px;
+      }
+    }
   }
   .add_row {
     width: 26px;

@@ -2,12 +2,20 @@
   <div class="home">
     <div class="head_row">
       <span class="title">我的项目</span>
+      <div class="img_btn flex" @click="showMessageNotification">
+        <img src="@/assets/img/homePage/message.png" alt="" />
+      </div>
     </div>
     <div class="sort_area flex"><span class="subtitle">排序</span></div>
 
     <div class="project_list">
       <div class="normal_item project_add">
-        <img class="item_img" src="@/assets/img/homePage/create.png" alt="" />
+        <img
+          class="item_img"
+          src="@/assets/img/homePage/create.png"
+          alt=""
+          @click="showCreateConfrim = true"
+        />
         <span class="project_title ellipsis">创建新项目/组</span>
         <div class="mask">
           <div class="mask_item flex" @click="showCreateConfrim = true">
@@ -61,19 +69,21 @@
 
               <div class="more">
                 <img src="@/assets/img/homePage/more.png" alt="" />
-                <div class="operation_panel">
-                  <div
-                    class="panel_item"
-                    @click.stop="goRename('项目', index2)"
-                  >
-                    重命名
-                  </div>
-                  <div class="panel_item" @click.stop="copyProject(item2)">
-                    复制分镜到新项目
-                  </div>
-                  <div class="panel_item">移到回收站</div>
-                  <div class="panel_item" @click="moveProject(item2.id)">
-                    移出组
+                <div class="transparent_back">
+                  <div class="operation_panel">
+                    <div
+                      class="panel_item"
+                      @click.stop="goRename('项目', item2)"
+                    >
+                      重命名
+                    </div>
+                    <div class="panel_item" @click.stop="copyProject(item2)">
+                      复制分镜到新项目
+                    </div>
+                    <div class="panel_item">移到回收站</div>
+                    <div class="panel_item" @click="moveProject(item2.id)">
+                      移出组
+                    </div>
                   </div>
                 </div>
               </div>
@@ -85,12 +95,14 @@
           包含{{ item.dataList.length }}个项目
           <div class="operation_area">
             <img class="more" src="@/assets/img/homePage/more.png" alt="" />
-            <div class="operation_panel">
-              <div class="panel_item" @click.stop="goRename('组', index)">
-                重命名
-              </div>
-              <div class="panel_item" @click.stop="deleteGroup(index)">
-                删除组
+            <div class="transparent_back">
+              <div class="operation_panel">
+                <div class="panel_item" @click.stop="goRename('组', item)">
+                  重命名
+                </div>
+                <div class="panel_item" @click.stop="deleteGroup(index)">
+                  删除组
+                </div>
               </div>
             </div>
           </div>
@@ -99,12 +111,12 @@
       <!-- 小组 -->
       <!-- 项目 -->
       <div
-        draggable="true"
+        :draggable="!item.isCooperation"
         @dragstart="dragStart($event)"
         @dragend="dragEnd($event)"
         :data-id="item.id"
         class="normal_item project_item"
-        v-for="(item, index) in projectList"
+        v-for="item in projectList"
         :key="item.id"
         @click="goStoryboard(item)"
       >
@@ -114,36 +126,42 @@
           src="@/assets/img/homePage/project.png"
           alt=""
         />
-        <span class="project_title ellipsis">{{ item.projectName }}</span>
+        <span class="project_title ellipsis"
+          >{{ item.projectName
+          }}<span v-if="item.isCooperation">(协作项目)</span></span
+        >
         <div class="project_subtitle flex">
           创建于{{ getTime(item.createTime) }}
           <div class="operation_area">
             <img class="more" src="@/assets/img/homePage/more.png" alt="" />
-            <div class="operation_panel">
-              <div class="panel_item" @click.stop="goRename('项目', index)">
-                重命名
-              </div>
-              <div class="panel_item" @click.stop="copyProject(item)">
-                复制分镜到新项目
-              </div>
-              <div class="panel_item" @click.stop="deleteProject(item)">
-                移入回收站
+            <div class="transparent_back">
+              <div class="operation_panel">
+                <div class="panel_item" @click.stop="goRename('项目', item)">
+                  重命名
+                </div>
+                <div class="panel_item" @click.stop="copyProject(item)">
+                  复制分镜到新项目
+                </div>
+                <div class="panel_item" @click.stop="deleteProject(item)">
+                  移入回收站
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
       <!-- 项目 -->
-      <div class="recycle_bin flex" @click="showRecycleBin = true">回收站</div>
+      <div class="recycle_bin" @click="showRecycleBin = true">
+        <div class="color_back flex">
+          <img src="@/assets/img/homePage/recycle_bin.png" alt="" />
+        </div>
+        <span>回收站</span>
+      </div>
     </div>
     <Rename
       v-if="showRename"
       :renameType="renameType"
-      :renameData="
-        renameType == '项目'
-          ? projectList[renameIndex]
-          : projectGroup[renameIndex]
-      "
+      :renameData="renameItem"
       @close="showRename = false"
       @confirm="renameConfirm"
     />
@@ -173,6 +191,7 @@ import {
   copyProject,
   moveProjectToGroup,
 } from "@/assets/js/request";
+import bus from "@/assets/js/eventBus.js";
 import Rename from "@/components/Rename.vue";
 import CreateConfrim from "@/components/CreateConfrim.vue";
 import RecycleBin from "@/components/RecycleBin.vue";
@@ -190,12 +209,14 @@ export default {
       showRecycleBin: false, //回收站组件
       showCreateConfrim: false, //新建确认组件
       renameType: "项目", //"项目"/"组"
-      renameIndex: 0,
+      renameItem: null,
     };
   },
   methods: {
     ...mapMutations(["SET_ACTIVEPROJECT"]),
-
+    showMessageNotification() {
+      bus.$emit("showMessageNotification", true);
+    },
     dropFiles(e) {
       for (let i = 0; i < this.projectList.length; i++) {
         if (this.projectList[i].id == this.dragItemId) {
@@ -248,7 +269,7 @@ export default {
         for (let i = 0; i < res.data.length; i++) {
           //没有放入组内的文件
           if (0 == res.data[i].projectType) {
-            if (0 == res.data[i].parentId) {
+            if (0 == res.data[i].parentId || !res.data[i].parentId) {
               tempProjectList.push(res.data[i]);
             } else {
               //放入组内的文件
@@ -270,32 +291,21 @@ export default {
     createProject(data) {
       creatProject({
         projectName: data.name,
-        modelId: "2",
+        modelId: data.modelId,
       }).then((res) => {
         this.getProjectList();
+        this.errorHandle(res);
       });
-      // this.projectList.push({
-      //   id: Date.now().toString(),
-      //   name: `${data.name}`,
-      //   createTime: this.getTime(Date.now()),
-      // });
     },
     //创建组
     createGroup() {
       creatProjectGroup().then((res) => {
         this.getProjectList();
+        this.errorHandle(res);
       });
-      // this.projectGroup.push({
-      //   id: Date.now().toString(),
-      //   name: "未命名组",
-      //   dataList: [],
-      // });
     },
     //移出组
-    removeGroup() {
-      // let temp = this.projectGroup[groupIndex].dataList.splice(projectIndex, 1);
-      // this.projectList.push(temp[0]);
-    },
+    removeGroup() {},
     moveProject(projectId, parentId = 0) {
       let params = {
         projectId: projectId,
@@ -312,18 +322,17 @@ export default {
         ids: item.id,
       }).then((res) => {
         this.getProjectList();
+        this.errorHandle(res);
       });
-
-      // this.projectList.splice(index, 1);
     },
     //删除组
     deleteGroup(index) {
       deleteProjectGroup({
         ids: this.projectGroup[index].id,
       }).then((res) => {
+        this.errorHandle(res);
         this.getProjectList();
       });
-      this.projectGroup.splice(index, 1);
     },
     //复制项目
     copyProject(item) {
@@ -331,25 +340,32 @@ export default {
         projectId: item.id,
       }).then((res) => {
         this.getProjectList();
+        this.errorHandle(res);
       });
     },
+    errorHandle(res) {
+      if (res.code != 200) {
+        this.$message({
+          message: res.msg,
+          type: "error",
+        });
+      }
+    },
     //打开重命名
-    goRename(renameType, index) {
+    goRename(renameType, item) {
       this.renameType = renameType;
-      this.renameIndex = index;
+      this.renameItem = item;
       this.showRename = true;
     },
     //确认重命名
     renameConfirm(e) {
       console.log(e);
-      // this.renameType == "项目"
-      //   ? (this.projectList[this.renameIndex] = e)
-      //   : (this.projectGroup[this.renameIndex] = e);
       this.getProjectList();
       this.showRename = false;
     },
 
     goStoryboard(item) {
+      item.banEdit = item.isCooperation && item.permission == "CHECK";
       this.SET_ACTIVEPROJECT(item);
       this.$router.push("/storyboard");
       sessionStorage.setItem("activeProject", JSON.stringify(item));
@@ -372,31 +388,60 @@ export default {
   padding-left: 26px;
   .recycle_bin {
     position: fixed;
-    right: 60px;
-    bottom: 60px;
-    width: 100px;
-    height: 100px;
-    background: #dedede;
-    justify-content: center;
+    right: 32px;
+    bottom: 30px;
     cursor: pointer;
+    .color_back {
+      width: 32px;
+      height: 32px;
+      background: #ffffff;
+      box-shadow: 0px 1px 10px 0px rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      justify-content: center;
+      > img {
+        width: 18px;
+        height: 18px;
+        margin-bottom: 2px;
+      }
+    }
+    > span {
+      height: 14px;
+      font-family: Source Han Sans, Source Han Sans;
+      font-size: 10px;
+      color: #3d3d3d;
+      line-height: 14px;
+    }
   }
   .head_row {
     display: flex;
     align-items: center;
     margin-top: 10px;
     height: 32px;
+    padding-right: 28px;
     .title {
-      font-family: PingFang SC, PingFang SC;
       font-weight: 600;
       font-size: 16px;
       color: #3d3d3d;
+    }
+    .img_btn {
+      width: 32px;
+      height: 32px;
+      background: #ffffff;
+      box-shadow: 0px 1px 10px 0px rgba(0, 0, 0, 0.1);
+      border-radius: 54px 54px 54px 54px;
+      justify-content: center;
+      margin-left: auto;
+      cursor: pointer;
+      > img {
+        width: 18px;
+        height: 18px;
+      }
     }
   }
   .sort_area {
     margin-top: 20px;
     margin-bottom: 30px;
     .subtitle {
-      font-family: PingFang SC, PingFang SC;
       font-weight: 500;
       font-size: 12px;
       color: #adadad;
@@ -415,7 +460,6 @@ export default {
         height: 105px;
       }
       .project_title {
-        font-family: PingFang SC, PingFang SC;
         font-weight: 500;
         font-size: 14px;
         color: #3d3d3d;
@@ -423,12 +467,12 @@ export default {
         width: 124px;
       }
       .project_subtitle {
-        font-family: PingFang SC, PingFang SC;
         font-weight: 500;
         font-size: 10px;
         color: #adadad;
         margin-top: 6px;
         justify-content: space-between;
+        margin-bottom: 20px;
         .operation_area {
           position: relative;
           cursor: pointer;
@@ -437,15 +481,18 @@ export default {
             height: 20px;
           }
           &:hover {
-            .operation_panel {
+            .transparent_back {
               display: block;
             }
           }
-          .operation_panel {
+          .transparent_back {
             display: none;
             position: absolute;
-            top: 20px;
+            top: 0px;
             left: 0;
+            padding-top: 20px;
+          }
+          .operation_panel {
             width: 154px;
 
             background: #ffffff;
@@ -454,7 +501,6 @@ export default {
             z-index: 3;
             padding: 0 13px 0 25px;
             .panel_item {
-              font-family: PingFang SC, PingFang SC;
               font-weight: 400;
               font-size: 14px;
               color: #3d3d3d;
@@ -524,13 +570,11 @@ export default {
               flex-direction: column;
               width: 100%;
               .info_title {
-                font-family: PingFang SC, PingFang SC;
                 font-weight: 500;
                 font-size: 14px;
                 color: #3d3d3d;
               }
               .info_subtitle {
-                font-family: PingFang SC, PingFang SC;
                 font-weight: 500;
                 font-size: 10px;
                 color: #adadad;
@@ -540,21 +584,25 @@ export default {
             .more {
               margin-right: 10px;
               position: relative;
+              cursor: pointer;
               > img {
                 width: 20px;
                 height: 20px;
               }
               &:hover {
-                .operation_panel {
+                .transparent_back {
                   display: block;
                 }
               }
-              cursor: pointer;
-              .operation_panel {
+
+              .transparent_back {
                 display: none;
                 position: absolute;
-                top: 20px;
+                top: 0px;
                 left: 0;
+                padding-top: 20px;
+              }
+              .operation_panel {
                 width: 154px;
 
                 background: #ffffff;
@@ -563,7 +611,6 @@ export default {
                 z-index: 3;
                 padding: 0 13px 0 25px;
                 .panel_item {
-                  font-family: PingFang SC, PingFang SC;
                   font-weight: 400;
                   font-size: 14px;
                   color: #3d3d3d;
@@ -605,7 +652,6 @@ export default {
             margin-left: 20px;
             margin-right: 12px;
           }
-          font-family: PingFang SC, PingFang SC;
           font-weight: 500;
           font-size: 14px;
           color: #3d3d3d;

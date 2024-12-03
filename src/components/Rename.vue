@@ -7,7 +7,7 @@
       </div>
       <div class="subtitle">{{ renameType }}名称</div>
       <input
-        v-model="editData.name"
+        v-model="editData.projectName"
         type="text"
         :placeholder="`输入${renameType}名称`"
       />
@@ -34,14 +34,14 @@ export default {
       if (this.renameType == "项目") {
         updateProjectName({
           id: this.editData.id,
-          projectName: this.editData.name,
+          projectName: this.editData.projectName,
         }).then((res) => {
           this.$emit("confirm", this.editData);
         });
       } else {
         updateProjectGroup({
           id: this.editData.id,
-          projectName: this.editData.name,
+          projectName: this.editData.projectName,
         }).then((res) => {
           this.$emit("confirm", this.editData);
         });
@@ -49,6 +49,7 @@ export default {
     },
   },
   created() {
+    console.log(this.renameData, "this.renameData");
     this.editData = JSON.parse(JSON.stringify(this.renameData));
   },
 };
@@ -75,7 +76,6 @@ export default {
       border: 1px solid #e4e5ee;
       outline: none;
       padding: 0 12px;
-      font-family: PingFang SC, PingFang SC;
       font-weight: 400;
       font-size: 12px;
       color: #3d3d3d;
@@ -84,7 +84,6 @@ export default {
       }
     }
     .panel_head {
-      font-family: PingFang SC, PingFang SC;
       font-weight: 600;
       font-size: 16px;
       color: #3d3d3d;
@@ -95,7 +94,6 @@ export default {
       }
     }
     .subtitle {
-      font-family: PingFang SC, PingFang SC;
       font-weight: 500;
       font-size: 14px;
       color: #3d3d3d;
@@ -111,7 +109,6 @@ export default {
         border-radius: 11px;
         text-align: center;
         line-height: 38px;
-        font-family: PingFang SC, PingFang SC;
         font-weight: 400;
         font-size: 14px;
         margin-left: 20px;

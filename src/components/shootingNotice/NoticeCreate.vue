@@ -9,38 +9,54 @@
         <div class="subtitle">
           <img src="@/assets/img/operatePage/necessary.png" alt="" />通告标题
         </div>
-        <input v-model="form1.title" type="text" placeholder="请输入" />
+        <input
+          v-model="form1.shootAnnounce.announceName"
+          type="text"
+          placeholder="请输入"
+          :readonly="activeProject.banEdit"
+        />
         <div class="subtitle">
           <img src="@/assets/img/operatePage/necessary.png" alt="" />拍摄日期
         </div>
         <el-date-picker
           style="width: 415px"
-          v-model="form1.dateSelect"
+          v-model="form1.shootAnnounce.announceTime"
           type="date"
           placeholder="选择日期"
-          value-format="yyyy年MM月dd日"
           :clearable="false"
+          :readonly="activeProject.banEdit"
         >
         </el-date-picker>
         <div class="subtitle">第一镜时间</div>
         <el-time-picker
           style="width: 415px"
-          v-model="form1.timeSelect"
+          v-model="form1.shootAnnounce.firstMirror"
           placeholder="选择第一镜时间"
           format="HH:mm"
-          value-format="HH:mm"
           :clearable="false"
+          :readonly="activeProject.banEdit"
         >
         </el-time-picker>
         <div class="subtitle">拍摄地点</div>
-        <input type="text" placeholder="请输入" />
+        <input
+          type="text"
+          placeholder="请输入"
+          v-model="form1.shootAnnounce.shootAdress"
+          :readonly="activeProject.banEdit"
+        />
         <div class="subtitle">天气</div>
-        <input type="text" placeholder="请输入" />
+        <input
+          type="text"
+          placeholder="请输入"
+          v-model="form1.shootAnnounce.weather"
+          :readonly="activeProject.banEdit"
+        />
         <div class="subtitle">备注</div>
         <input
-          v-model="form1.notes"
+          v-model="form1.shootAnnounce.remark"
           type="text"
           placeholder="你可以输入一些针对整个通告的备注信息"
+          :readonly="activeProject.banEdit"
         />
       </div>
     </div>
@@ -53,12 +69,19 @@
         <div class="subtitle">
           <img src="@/assets/img/operatePage/necessary.png" alt="" />角色 + 姓名
         </div>
-        <div class="info_row flex">
+
+        <div
+          class="info_row flex"
+          v-for="(item, index) in form1.shootAnnounceMemberList"
+          :key="index"
+          v-show="item.isDelete == '0'"
+        >
           <el-select
             style="width: 165px; margin-right: 14px"
-            v-model="value"
+            v-model="item.memberType"
             placeholder="请选择"
             :popper-append-to-body="false"
+            :disabled="activeProject.banEdit"
           >
             <el-option
               v-for="item in options"
@@ -68,15 +91,34 @@
             >
             </el-option>
           </el-select>
-          <input style="width: 236px" type="text" placeholder="请输入" />
+          <input
+            style="width: 236px"
+            type="text"
+            placeholder="请输入"
+            v-model="item.memberName"
+            :readonly="activeProject.banEdit"
+          />
+          <div
+            v-if="!activeProject.banEdit"
+            class="deleteMember flex"
+            @click="item.isDelete = '1'"
+          >
+            <img src="@/assets/img/homePage/recycle_bin.png" alt="" />
+          </div>
         </div>
         <img
+          v-if="!activeProject.banEdit"
           class="add_row"
           src="@/assets/img/operatePage/add_row.png"
           alt=""
+          @click="addMember()"
         />
         <div class="subtitle">备注</div>
-        <input type="text" placeholder="请输入" />
+        <input
+          type="text"
+          placeholder="请输入"
+          :readonly="activeProject.banEdit"
+        />
       </div>
     </div>
   </div>
@@ -84,36 +126,51 @@
             
       <script>
 import { mapState, mapMutations } from "vuex";
+
 export default {
   components: {},
   computed: {
-    ...mapState(["activeNotice"]),
+    ...mapState(["activeNotice", "activeProject"]),
   },
   data() {
     return {
       form1: {},
       options: [
         {
-          value: "导演",
+          value: "1",
           label: "导演",
         },
         {
-          value: "摄影",
+          value: "2",
           label: "摄影",
         },
         {
-          value: "制片",
+          value: "3",
           label: "制片",
         },
       ],
-      value: "导演",
     };
   },
   methods: {
     ...mapMutations(["SET_NOTICELIST", "SET_ACTIVENOTICE"]),
+    addMember() {
+      this.form1.shootAnnounceMemberList.push({
+        id: null,
+        projectId: this.activeProject.id,
+        announceId: this.activeNotice.shootAnnounce.id,
+        memberType: "", //人员类型 按原型顺序从1开始排
+        memberName: "", // 名称
+        remark: "备注",
+        status: "0",
+        isDelete: "0",
+      });
+    },
   },
   created() {
-    this.form1 = this.activeNotice.form1;
+    this.form1 = this.activeNotice;
+    if (this.form1.shootAnnounceMemberList.length == 0) {
+      this.addMember();
+    }
   },
 };
 </script>
@@ -129,7 +186,6 @@ export default {
     border: 1px solid #e4e5ee;
     outline: none;
     padding: 0 12px;
-    font-family: PingFang SC, PingFang SC;
     font-weight: 400;
     font-size: 12px;
     color: #3d3d3d;
@@ -140,7 +196,6 @@ export default {
   ::v-deep .el-input__inner {
     height: 32px;
     border-radius: 5px;
-    font-family: PingFang SC, PingFang SC;
     font-weight: 400;
     font-size: 12px;
     color: #3d3d3d;
@@ -155,13 +210,11 @@ export default {
     margin-right: 70px;
     padding-top: 20px;
     .title {
-      font-family: PingFang SC, PingFang SC;
       font-weight: 500;
       font-size: 16px;
       color: #3d3d3d;
     }
     .des {
-      font-family: PingFang SC, PingFang SC;
       font-weight: 400;
       font-size: 12px;
       color: #959595;
@@ -175,7 +228,6 @@ export default {
     .subtitle {
       margin-top: 20px;
       margin-bottom: 10px;
-      font-family: PingFang SC, PingFang SC;
       font-weight: 500;
       font-size: 14px;
       color: #3d3d3d;
@@ -187,6 +239,22 @@ export default {
     }
     .info_row {
       margin-top: 10px;
+      position: relative;
+      .deleteMember {
+        position: absolute;
+        right: -36px;
+        top: 4px;
+        width: 26px;
+        height: 26px;
+        background: #ededed;
+        border-radius: 50%;
+        justify-content: center;
+        cursor: pointer;
+        > img {
+          width: 16px;
+          height: 16px;
+        }
+      }
     }
     .add_row {
       width: 26px;

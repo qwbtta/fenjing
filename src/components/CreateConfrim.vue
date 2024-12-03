@@ -10,6 +10,16 @@
         type="text"
         :placeholder="`必填，输入项目名`"
       />
+      <div class="subtitle">模板</div>
+      <el-select v-model="confirmData.modelId" placeholder="请选择">
+        <el-option
+          v-for="item in options"
+          :key="item.value"
+          :label="item.label"
+          :value="item.value"
+        >
+        </el-option>
+      </el-select>
       <div class="btn_group flex">
         <div class="normal_btn canel" @click="$emit('close')">取消</div>
         <div
@@ -32,7 +42,9 @@ export default {
     return {
       confirmData: {
         name: "",
+        modelId: "2",
       },
+      options: [],
     };
   },
   methods: {
@@ -44,7 +56,15 @@ export default {
     },
   },
   created() {
-    getModelList().then((res) => {});
+    getModelList().then((res) => {
+      for (let i = 0; i < res.data.length; i++) {
+        let item = {
+          value: res.data[i].id,
+          label: res.data[i].modelName,
+        };
+        this.options.push(item);
+      }
+    });
   },
 };
 </script>
@@ -70,16 +90,23 @@ export default {
       border: 1px solid #e4e5ee;
       outline: none;
       padding: 0 12px;
-      font-family: PingFang SC, PingFang SC;
-      font-weight: 400;
       font-size: 12px;
       color: #3d3d3d;
       &::placeholder {
         color: #959595;
       }
     }
+    ::v-deep .el-input__inner {
+      width: 418px;
+      height: 32px;
+      border-radius: 5px;
+      font-size: 12px;
+      color: #3d3d3d;
+    }
+    ::v-deep .el-input__icon {
+      line-height: 32px;
+    }
     .panel_head {
-      font-family: PingFang SC, PingFang SC;
       font-weight: 600;
       font-size: 16px;
       color: #3d3d3d;
@@ -90,7 +117,6 @@ export default {
       }
     }
     .subtitle {
-      font-family: PingFang SC, PingFang SC;
       font-weight: 500;
       font-size: 14px;
       color: #3d3d3d;
@@ -106,7 +132,6 @@ export default {
         border-radius: 11px;
         text-align: center;
         line-height: 38px;
-        font-family: PingFang SC, PingFang SC;
         font-weight: 400;
         font-size: 14px;
         margin-left: 20px;
