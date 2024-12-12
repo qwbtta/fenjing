@@ -2,7 +2,13 @@
   <div class="Rename flex">
     <div class="edit_panel">
       <div class="panel_head flex">
-        <span>创建项目</span><span @click="$emit('close')">x</span>
+        <span>创建项目</span>
+        <img
+          class="close"
+          @click="$emit('close')"
+          src="@/assets/img/operatePage/close.png"
+          alt=""
+        />
       </div>
       <div class="subtitle">项目名</div>
       <input
@@ -112,6 +118,8 @@ export default {
       color: #3d3d3d;
       justify-content: space-between;
       .close {
+        width: 20px;
+        height: 20px;
         margin-right: 4px;
         cursor: pointer;
       }

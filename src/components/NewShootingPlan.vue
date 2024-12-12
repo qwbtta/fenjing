@@ -148,11 +148,17 @@ export default {
         this.dateSelect.setHours(hours);
         this.dateSelect.setMinutes(minutes);
         this.timeSelect = this.dateSelect;
+      } else {
+        this.dateSelect.setHours(this.timeSelect.getHours());
+        this.dateSelect.setMinutes(this.timeSelect.getMinutes());
       }
     },
     timeChange() {
       if (!this.dateSelect) {
         this.dateSelect = this.timeSelect;
+      } else {
+        this.dateSelect.setHours(this.timeSelect.getHours());
+        this.dateSelect.setMinutes(this.timeSelect.getMinutes());
       }
     },
     confirm() {
@@ -175,9 +181,6 @@ export default {
         // startTime: this.shootingData.startTime,
         shootAdress: this.shootingData.shootAdress,
       };
-      // let params = this.shootingData;
-      this.dateSelect.setHours(this.timeSelect.getHours());
-      this.dateSelect.setMinutes(this.timeSelect.getMinutes());
       params.startTime = this.dateSelect;
       if (this.OperationType == "新建") {
         params.projectId = this.activeProject.id;

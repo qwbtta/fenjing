@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="notice_scroll_area">
     <div class="sheet_box">
       <div class="box_left">
         <span class="title">基本信息</span>
@@ -117,6 +117,7 @@
         <input
           type="text"
           placeholder="请输入"
+          v-model="form1.shootAnnounceMemberList[0].remark"
           :readonly="activeProject.banEdit"
         />
       </div>
@@ -160,7 +161,7 @@ export default {
         announceId: this.activeNotice.shootAnnounce.id,
         memberType: "", //人员类型 按原型顺序从1开始排
         memberName: "", // 名称
-        remark: "备注",
+        remark: "",
         status: "0",
         isDelete: "0",
       });

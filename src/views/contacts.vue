@@ -14,7 +14,10 @@
             <div
               class="narmal_tab tab_left"
               :class="{ active_tab: 0 == activeTabIndex }"
-              @click="activeTabIndex = 0"
+              @click="
+                activeTabIndex = 0;
+                activeItem = '所有联系人';
+              "
             >
               人员
             </div>
@@ -24,6 +27,7 @@
               @click="
                 activeTabIndex = 1;
                 activeGroup = {};
+                activeItem = '';
               "
             >
               组织
@@ -40,9 +44,11 @@
               getContactList({
                 groupId: '',
                 type: '0',
-              })
+              });
+              activeItem = '所有联系人';
             "
             class="contact_type flex"
+            :class="{ active_contact_type: activeItem == '所有联系人' }"
           >
             <img src="@/assets/img/homePage/contacts_all.png" alt="" />
             <span>所有联系人</span>
@@ -52,17 +58,22 @@
               getContactList({
                 groupId: '',
                 type: '1',
-              })
+              });
+              activeItem = '未分组联系人';
             "
             class="contact_type flex"
+            :class="{ active_contact_type: activeItem == '未分组联系人' }"
           >
             <img src="@/assets/img/homePage/contacts_ungrouped.png" alt="" />
             <span>未分组联系人</span>
           </div>
-          <div class="contact_type flex">
+          <!-- <div
+            class="contact_type flex"
+            :class="{ active_contact_type: activeItem == '所有联系人' }"
+          >
             <img src="@/assets/img/homePage/contacts_group.png" alt="" />
             <span>创建的新联系人</span>
-          </div>
+          </div> -->
         </div>
         <div v-if="1 == activeTabIndex">
           <div class="sutitle">组织架构</div>
@@ -71,9 +82,13 @@
           </div>
           <div
             class="contact_type flex"
+            :class="{ active_contact_type: activeItem == item.groupName }"
             v-for="(item, index) in groupList"
             :key="index"
-            @click="checkGroup(item)"
+            @click="
+              checkGroup(item);
+              activeItem = item.groupName;
+            "
           >
             <img src="@/assets/img/homePage/contacts_group.png" alt="" />
             <span>{{ item.groupName }}</span>
@@ -106,15 +121,45 @@
           <tbody>
             <tr v-for="(item, index) in myContactList" :key="index">
               <td>{{ item.nickname }}</td>
-              <td>
-                <span v-for="(item2, index2) in groupList" :key="index2"
-                  >{{ item2.groupName
-                  }}<span v-if="index2 !== groupList.length - 1">,</span> </span
-                >等{{ groupList.length }}个分组
-                <!-- <div class="group_panel">
+              <td
+                class="group_td"
+                @mouseenter="handleMouseOver(item.groupVoList || [])"
+              >
+                <span v-if="item.groupVoList">
+                  <span
+                    v-for="(item2, index2) in item.groupVoList?.slice(0, 3)"
+                    :key="index2"
+                    >{{ item2.groupName
+                    }}<span
+                      v-if="
+                        index2 !== item.groupVoList?.slice(0, 3).length - 1 &&
+                        item.groupVoList?.length != 1
+                      "
+                      >,</span
+                    ></span
+                  >等{{ item.groupVoList?.length }}个分组</span
+                >
+                <span v-else style="color: #959595">添加...</span>
+                <div class="group_panel">
                   <div class="subtitle">分组管理</div>
-                  <div class="group_row"></div>
-                </div> -->
+                  <div
+                    class="group_row flex"
+                    v-for="(item3, index3) in belongGroupList"
+                    :key="index3"
+                  >
+                    <img
+                      class="select_area"
+                      @click="changeBelong(item.groupUserId, item3)"
+                      :src="
+                        !item3.belong
+                          ? require('@/assets/img/operatePage/unselect.png')
+                          : require('@/assets/img/operatePage/checked_green.png')
+                      "
+                      alt=""
+                    />
+                    <span class="ellipsis">{{ item3.groupName }}</span>
+                  </div>
+                </div>
               </td>
               <td>
                 <span class="delete" @click="toDeleteContact(item.groupUserId)"
@@ -149,7 +194,9 @@
       <div v-if="1 == activeTabIndex" class="main_right">
         <span class="right_sutitle"
           >当前视图：{{
-            activeGroup.groupName ? activeGroup.groupName : "全部人员"
+            activeGroup.groupName
+              ? `${activeGroup.groupName} 分组成员`
+              : "全部人员"
           }}</span
         >
         <table>
@@ -215,18 +262,20 @@ export default {
   },
   data() {
     return {
-      activeTabIndex: 0,
+      activeTabIndex: 0, //0 人员 1 组织
+      activeItem: "所有联系人", //
       showAddContact: false, //添加联系人/组 组件显隐
       addType: "", //添加联系人/组 组件显类型
       editData: null, //重命名组的信息
-      myContactList: [],
-      groupList: [],
+      myContactList: [], //联系人列表
+      groupList: [], //分组列表
       contactListParams: {
         //弄到这里是为了在不同条件的列表下 进行操作后 方便重新请求刷新数据
         groupId: "",
         type: "0", // ( groupId不为空的时候type为空否则 0所有  1未分组)
       },
       activeGroup: {},
+      belongGroupList: [],
     };
   },
   watch: {
@@ -234,6 +283,7 @@ export default {
       if (newVal) {
         this.getGroupList();
       } else {
+        this.contactListParams = { groupId: "", type: "0" };
         this.getContactList(this.contactListParams);
       }
     },
@@ -268,11 +318,13 @@ export default {
       this.addType = type;
       this.showAddContact = true;
     },
-    joinGroup(contact, group) {
+    joinGroup(groupUserId, groupId) {
       groupContact({
-        applyUserId: contact.groupUserId, //(联系人用户id)
-        groupId: group.id,
-      }).then((res) => {});
+        applyUserId: groupUserId, //(联系人用户id)
+        groupId: groupId,
+      }).then((res) => {
+        this.getContactList();
+      });
     },
     toEditGroup(item) {
       this.editData = item;
@@ -289,13 +341,32 @@ export default {
         this.getContactList();
       });
     },
-    toRemoveGroupContact(id) {
+    toRemoveGroupContact(groupUserId, groupId) {
       removeGroupContact({
-        applyUserId: id,
-        groupIds: this.contactListParams.groupId,
+        applyUserId: groupUserId,
+        groupIds: groupId || this.contactListParams.groupId,
       }).then((res) => {
         this.getContactList();
       });
+    },
+    handleMouseOver(groupVoList) {
+      this.belongGroupList = JSON.parse(JSON.stringify(this.groupList));
+      for (let i = 0; i < this.belongGroupList.length; i++) {
+        this.$set(this.belongGroupList[i], "belong", false);
+        for (let y = 0; y < groupVoList.length; y++) {
+          if (this.belongGroupList[i].id == groupVoList[y].groupId) {
+            this.$set(this.belongGroupList[i], "belong", true);
+          }
+        }
+      }
+    },
+    changeBelong(groupUserId, item3) {
+      if (item3.belong) {
+        this.toRemoveGroupContact(groupUserId, item3.id);
+      } else {
+        this.joinGroup(groupUserId, item3.id);
+      }
+      item3.belong = !item3.belong;
     },
   },
   created() {
@@ -399,8 +470,14 @@ export default {
         margin-bottom: 16px;
         cursor: pointer;
       }
+      .active_contact_type {
+        background: #f4f6f7;
+      }
       .contact_type {
-        margin-bottom: 20px;
+        height: 36px;
+        margin-bottom: 4px;
+        border-radius: 4px;
+        margin-right: 16px;
         cursor: pointer;
         > img {
           width: 16px;
@@ -414,8 +491,8 @@ export default {
         }
         .more {
           margin-left: auto;
-          margin-right: 16px;
           position: relative;
+          margin-right: 8px;
           &:hover {
             .more_panel {
               display: block;
@@ -470,6 +547,14 @@ export default {
           border-radius: 5px 0 0 5px;
         }
       }
+      .group_td {
+        cursor: pointer;
+        &:hover {
+          .group_panel {
+            display: block;
+          }
+        }
+      }
       td {
         height: 60px;
         padding-left: 20px;
@@ -477,14 +562,26 @@ export default {
         color: #3d3d3d;
         position: relative;
         .group_panel {
+          display: none;
+          width: 260px;
           position: absolute;
-          top: 20px;
-          left: 0;
+          top: 48px;
+          left: 16px;
           background: #ffffff;
           box-shadow: 0px 1px 20px 0px rgba(0, 0, 0, 0.1);
           border-radius: 6px;
           z-index: 3;
           padding: 10px;
+          .group_row {
+            margin-top: 10px;
+            width: 240px;
+            .select_area {
+              width: 16px;
+              height: 16px;
+              margin-right: 10px;
+              cursor: pointer;
+            }
+          }
         }
         .delete {
           color: #e81515;

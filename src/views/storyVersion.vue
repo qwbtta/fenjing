@@ -46,15 +46,25 @@
               {{ getValue(item.colObj, "时长") }}秒
             </div>
           </div>
-          <div class="content">{{ item.content }}</div>
+          <div class="content" v-if="getValue(item.colObj, '内容')">
+            {{ getValue(item.colObj, "内容") }}
+          </div>
+          <div class="row1 flex">
+            <div
+              v-if="getValue(item.colObj, '备注')"
+              style="border-radius: 10px"
+            >
+              {{ getValue(item.colObj, "备注") }}
+            </div>
+          </div>
           <div class="item_foot flex">
             <span>镜头{{ index + 1 }}</span>
-            <!-- <img
+            <img
               @click="goStoryboardEdit(item)"
               class="edit"
               src="@/assets/img/operatePage/edit.png"
               alt=""
-            /> -->
+            />
           </div>
         </div>
       </draggable>
@@ -74,12 +84,18 @@
         <div @click="$router.push('/shootingPlan')" class="router_btn flex">
           <span>预览故事版</span>
         </div>
-        <div class="footer_close" @click="showTips = false">关闭</div>
+        <img
+          class="footer_close"
+          @click="showTips = false"
+          src="@/assets/img/operatePage/close.png"
+          alt=""
+        />
       </div>
     </div>
     <StoryboardEdit
       v-if="showStoryboardEdit"
       @close="showStoryboardEdit = false"
+      @edit="toGetMirrorList()"
       :editItem="editItem"
     />
     <ProjectionMode
@@ -119,7 +135,7 @@ export default {
     },
   },
   created() {
-    this.storyboardList = this.activeProject.storyboardList;
+    this.toGetMirrorList();
     console.log(this.activeProject, "this.activeProject");
   },
 };
@@ -203,11 +219,11 @@ export default {
           color: #959595;
         }
         .row1 {
-          height: 32px;
+          min-height: 32px;
           margin-top: 16px;
           div {
             padding: 0 15px;
-            height: 32px;
+            min-height: 32px;
             background: #f4f6f7;
             border-radius: 54px;
             text-align: center;
@@ -230,6 +246,7 @@ export default {
           font-size: 12px;
           color: #3d3d3d;
           margin-top: 22px;
+          margin-bottom: 7px;
           .edit {
             width: 16px;
             height: 16px;

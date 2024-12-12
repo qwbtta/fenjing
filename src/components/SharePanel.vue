@@ -25,9 +25,12 @@
             <div
               v-for="item in userList"
               :key="item.cooperationUserId"
-              class="table_body_row"
+              class="table_body_row flex"
             >
-              <div class="delete_con flex" v-if="item.permission !== 'ADMIN'">
+              <div
+                class="delete_con flex"
+                v-if="item.permission !== 'ADMIN' && !unauthorized"
+              >
                 <img
                   class="delete"
                   src="@/assets/img/operatePage/close.png"
@@ -38,10 +41,36 @@
               <div class="name_con flex">
                 <img
                   class="avatar"
-                  src="@/assets/img/homePage/default_avatar.png"
+                  :src="
+                    item.avatar ||
+                    require('@/assets/img/homePage/default_avatar.png')
+                  "
                   alt=""
                 />
                 <span class="common_font"> {{ item.nickname }}</span>
+              </div>
+              <div style="margin-left: auto">
+                <el-select
+                  v-if="item.permission == 'ADMIN'"
+                  value="超管"
+                  disabled
+                >
+                </el-select>
+                <el-select
+                  v-else
+                  v-model="item.permission"
+                  placeholder="请选择"
+                  :disabled="unauthorized"
+                  @change="changePermission(item, $event)"
+                >
+                  <el-option
+                    v-for="item in options"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  >
+                  </el-option>
+                </el-select>
               </div>
             </div>
           </div>
@@ -70,6 +99,7 @@
               class="contact_row flex"
             >
               <img
+                v-if="!unauthorized"
                 @click="changeStatus(item)"
                 class="select_area"
                 :src="
@@ -81,7 +111,10 @@
               />
               <img
                 class="avatar"
-                src="@/assets/img/homePage/default_avatar.png"
+                :src="
+                  item.avatar ||
+                  require('@/assets/img/homePage/default_avatar.png')
+                "
                 alt=""
               />
               <span class="common_font"> {{ item.nickname }}</span>
@@ -91,7 +124,7 @@
       </div>
       <div class="panel_bottom">
         <span class="des">链接分享</span>
-        <div class="status_area flex">
+        <div class="status_area flex" v-if="!unauthorized">
           获得链接者，
           <div class="status_area_right flex">
             <span class="permission">{{ permission }}</span>
@@ -104,18 +137,18 @@
               <div class="permissionPanel">
                 <div
                   class="permission_item"
-                  v-for="(item, index) in permissionList"
+                  v-for="(item, index) in options"
                   :key="index"
-                  @click="permission = item"
+                  @click="permission = item.label"
                 >
-                  {{ item }}
+                  {{ item.label }}
                 </div>
               </div>
             </div>
           </div>
         </div>
         <div class="btn btn1" @click="copyLink">复制链接</div>
-        <div class="btn btn2" @click="$emit('close')">完成</div>
+        <div class="btn btn2" @click="finish">完成</div>
       </div>
     </div>
   </div>
@@ -129,23 +162,55 @@ import {
   deleteCooperation,
   openShare,
   shareStatus,
+  updateUserRole,
+  getUserInfo,
 } from "@/assets/js/request";
 import { mapState, mapMutations } from "vuex";
 export default {
   components: {},
   data() {
     return {
+      userInfo: "",
       userList: [], //协作者列表
       myContactList: [], //联系人列表（实际显示）
       tempContactList: [], //联系人列表（所有数据供搜索使用）
       permission: "可编辑",
-      permissionList: ["可查看", "可编辑"],
       searchInput: "",
       inputEventBound: true, //输入监听器
+      options: [
+        {
+          value: "UPDATE",
+          label: "可编辑",
+        },
+        {
+          value: "CHECK",
+          label: "可查看",
+        },
+      ],
     };
   },
   computed: {
     ...mapState(["activeProject"]),
+    unauthorized() {
+      let unauthorized = false;
+      for (let i = 0; i < this.userList.length; i++) {
+        // if (
+        //   this.userInfo.id == this.userList[i].cooperationUserId &&
+        //   this.userList[i].permission == "CHECK"
+        // ) {
+        //   unauthorized = true;
+        //   break;
+        // }
+        if (
+          this.userInfo.id == this.userList[i].cooperationUserId &&
+          this.userList[i].permission != "ADMIN"
+        ) {
+          unauthorized = true;
+        }
+      }
+
+      return unauthorized;
+    },
   },
   methods: {
     getContactList() {
@@ -165,6 +230,14 @@ export default {
         this.tempContactList = res.data;
         console.log(this.myContactList, " this.myContactList");
       });
+    },
+    changePermission(item, e) {
+      updateUserRole({
+        cooperationUserId: item.cooperationUserId, // 协作用户id
+        forId: item.forId, // 项目id
+        role: "剪辑师,制片,导演", //  角色
+        permission: e, // 权限
+      }).then((res) => {});
     },
     changeStatus(item) {
       item.isAdd = !item.isAdd;
@@ -218,7 +291,18 @@ export default {
         this.myContactList = temp;
       }
     },
+    finish() {
+      openShare({
+        projectId: this.activeProject.id, //项目id
+        permission: this.permission == "可编辑" ? "UPDATE" : "CHECK", //权限 UPDATE CHECK
+        status: "1", //  是否开启  0否  1开启
+      });
+      this.$emit("close");
+    },
     copyLink() {
+      if (this.unauthorized) {
+        this.permission = "可查看";
+      }
       openShare({
         projectId: this.activeProject.id, //项目id
         permission: this.permission == "可编辑" ? "UPDATE" : "CHECK", //权限 UPDATE CHECK
@@ -239,6 +323,14 @@ export default {
   },
   created() {
     this.getUserList();
+    shareStatus({
+      projectId: this.activeProject.id,
+    }).then((res) => {
+      this.permission = res.data.permission == "UPDATE" ? "可编辑" : "可查看"; //权限 UPDATE CHECK
+    });
+    getUserInfo().then((res) => {
+      this.userInfo = res.data;
+    });
   },
 };
 </script>
@@ -332,6 +424,17 @@ export default {
               height: 12px;
               cursor: pointer;
             }
+          }
+          ::v-deep .el-input__inner {
+            width: 100px;
+            height: 32px;
+            border-radius: 5px;
+            font-weight: 400;
+            font-size: 12px;
+            color: #3d3d3d;
+          }
+          ::v-deep .el-input__icon {
+            line-height: 32px;
           }
         }
       }

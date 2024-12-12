@@ -5,19 +5,29 @@
         <span
           >{{ editData ? "重命名" : "添加"
           }}{{ addType == "contact" ? "联系人" : "分组" }}</span
-        ><span @click="$emit('close')">x</span>
+        ><img
+          class="close"
+          @click="$emit('close')"
+          src="@/assets/img/operatePage/close.png"
+          alt=""
+        />
       </div>
       <div v-if="addType == 'contact'">
-        <input
-          v-model="inputValue"
-          type="text"
-          placeholder="输入用户完整手机号"
-        />
-        <div class="normal_btn confirm" @click="confirm">查询</div>
+        <div class="flex">
+          <input
+            v-model="inputValue"
+            type="text"
+            placeholder="输入用户完整手机号"
+          />
+          <div class="normal_btn confirm special" @click="confirm">查询</div>
+        </div>
         <div v-if="searchResult" class="result_con flex">
           <img
             class="avatar"
-            src="@/assets/img/homePage/default_avatar.png"
+            :src="
+              searchResult.avatar ||
+              require('@/assets/img/homePage/default_avatar.png')
+            "
             alt=""
           />
           <span>{{ searchResult?.nickname }}</span>
@@ -62,6 +72,13 @@ export default {
   methods: {
     confirm() {
       selContact({ tel: this.inputValue }).then((res) => {
+        if (!res.data) {
+          this.$message({
+            message: "该用户不存在",
+            type: "warning",
+          });
+          return;
+        }
         this.searchResult = res.data;
       });
     },
@@ -143,6 +160,8 @@ export default {
       justify-content: space-between;
       margin-bottom: 25px;
       .close {
+        width: 20px;
+        height: 20px;
         margin-right: 4px;
         cursor: pointer;
       }
@@ -182,6 +201,11 @@ export default {
     .confirm {
       color: #ffffff;
       background: #12db34;
+    }
+    .special {
+      margin-left: 16px;
+      margin-top: 0px;
+      flex-shrink: 0;
     }
   }
 }

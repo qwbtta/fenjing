@@ -3,7 +3,12 @@
     <div class="edit_panel">
       <div class="panel_head flex">
         <span>修改{{ renameType }}名称</span
-        ><span @click="$emit('close')">x</span>
+        ><img
+          class="close"
+          @click="$emit('close')"
+          src="@/assets/img/operatePage/close.png"
+          alt=""
+        />
       </div>
       <div class="subtitle">{{ renameType }}名称</div>
       <input
@@ -36,16 +41,28 @@ export default {
           id: this.editData.id,
           projectName: this.editData.projectName,
         }).then((res) => {
-          this.$emit("confirm", this.editData);
+          if (res.code != 200) {
+            this.errHandle(res);
+          }
+          this.$emit("confirm");
         });
       } else {
         updateProjectGroup({
           id: this.editData.id,
           projectName: this.editData.projectName,
         }).then((res) => {
-          this.$emit("confirm", this.editData);
+          if (res.code != 200) {
+            this.errHandle(res);
+          }
+          this.$emit("confirm");
         });
       }
+    },
+    errHandle(res) {
+      this.$message({
+        message: res.msg,
+        type: "error",
+      });
     },
   },
   created() {
@@ -89,6 +106,8 @@ export default {
       color: #3d3d3d;
       justify-content: space-between;
       .close {
+        width: 20px;
+        height: 20px;
         margin-right: 4px;
         cursor: pointer;
       }

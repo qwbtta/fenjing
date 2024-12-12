@@ -22,6 +22,14 @@ export default {
       insertShareCooperation({ flag: this.$route.query.flag }).then((res) => {
         if (res.code == 200) {
           this.$router.push("/");
+        } else {
+          this.$message({
+            message: res.msg,
+            type: "warning",
+          });
+          setTimeout(() => {
+            this.$router.push("/");
+          }, 1500);
         }
       });
     });
@@ -29,6 +37,4 @@ export default {
 };
 </script>
   <style lang="scss" scoped>
-.share {
-}
 </style>

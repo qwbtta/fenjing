@@ -213,7 +213,12 @@
         <div @click="$router.push('/shootingPlan')" class="router_btn flex">
           <span>预览故事版</span>
         </div>
-        <div class="footer_close" @click="showTips = false">关闭</div>
+        <img
+          class="footer_close"
+          @click="showTips = false"
+          src="@/assets/img/operatePage/close.png"
+          alt=""
+        />
       </div>
     </div> -->
     <NewShootingPlan

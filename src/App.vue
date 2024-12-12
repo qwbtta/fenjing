@@ -1,6 +1,6 @@
 <template>
   <div id="home">
-    <Sidebar v-show="showSidebar" />
+    <Sidebar v-if="showSidebar" />
     <router-view />
     <MessageNotification
       v-if="showMessageNotification"

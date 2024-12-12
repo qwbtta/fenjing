@@ -2,7 +2,7 @@ import Vue from 'vue';
 import axios from "axios";
 
 
-const baseUrl = "https://kuaifenjing.zaiguwang.com"
+const baseUrl = "https://api.kuaifenjing.zaiguwang.com"
 
 axios.interceptors.request.use(config => {
   let token = localStorage.getItem("token")
@@ -13,11 +13,11 @@ axios.interceptors.request.use(config => {
   });
 // 添加响应拦截器
 axios.interceptors.response.use((response) =>{
-    if(response.data.code == 401){
+    if(response?.data?.code == 401){
       localStorage.removeItem("token")
       this.$router.push('/login');
     }
-	return response.data;
+	return response.data || response;
   }, 
   (error)=> {
     if(error?.response?.data?.code == 401){
@@ -52,7 +52,15 @@ axios.interceptors.response.use((response) =>{
 export const login = (params) => {
     return  postJSONData(baseUrl + "/storyBoard/login",params)
 }
-// 注销登录
+
+// 退出登录
+export const loginOut = (params) => {
+  return  axios.get(baseUrl + "/storyBoard/loginOut",{
+    params: params
+})
+}
+
+// 注销用户
 export const userLogOff = (params) => {
   return  postJSONData(baseUrl + "/storyBoard/userLogOff",params)
 }
@@ -67,11 +75,64 @@ export const loginWithCode = (params) => {
   return  postJSONData(baseUrl + "/storyBoard/loginWithCode",params)
 }
 
+// 获取微信二维码链接
+export const getQRCodeUrl = (params) => {
+  return  axios.get(baseUrl + "/storyBoard/getQRCodeUrl",{
+    params: params
+})
+}
+
+// 获取微信登录信息
+export const loginWithQRCode = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/loginWithQRCode",params)
+}
+
+// 微信绑定账号并登录
+export const loginWithQRCodeRegist = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/loginWithQRCodeRegist",params)
+}
+
+//微信解绑 
+export const unBindWechat = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/unBindWechat",params)
+}
 // 查询用户信息
 export const getUserInfo = (params) => {
   return  axios.get(baseUrl + "/storyBoard/userInfo",{
     params: params
 })
+}
+
+// 修改用户昵称/头像
+export const updateUser = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/updateUser",params)
+}
+
+// 修改密码/手机号等  身份验证获取手机验证码
+export const updateTelGetCode = (params) => {
+  return  axios.get(baseUrl + "/storyBoard/updateTelGetCode",{
+    params: params
+})
+}
+
+// 修改用户密码
+export const updateUserPassword = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/updateUserPassword",params)
+}
+
+// 修改手机号 原手机号验证确认
+export const checkTelCode = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/checkTelCode",params)
+}
+
+// 修改手机号 现手机号验证确认
+export const updateUserTel = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/updateUserTel",params)
+}
+
+// 上传头像
+export const uploadReturnUrl = (params) => {
+  return  postFormData(baseUrl + "/storyBoard/file/uploadReturnUrl",params)
 }
 
 // 搜索用户
@@ -187,6 +248,16 @@ export const userList = (params) => {
   return  axios.get(baseUrl + "/storyBoard/cooperation/userList",{
       params: params
   })
+}
+
+// 退出项目 
+export const outProject = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/cooperation/outProject",params)
+}
+
+// 修改角色权限
+export const updateUserRole = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/cooperation/updateUserRole",params)
 }
 
 // 是否开启链接分享

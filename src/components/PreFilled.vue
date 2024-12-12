@@ -2,7 +2,13 @@
   <div class="PreFilled flex">
     <div class="edit_panel">
       <div class="panel_head flex">
-        <span>创建通告</span><span @click="$emit('close')">关闭</span>
+        <span>创建通告</span>
+        <img
+          class="close"
+          @click="$emit('close')"
+          src="@/assets/img/operatePage/close.png"
+          alt=""
+        />
       </div>
       <div class="subtitle">通告标题</div>
 
@@ -140,6 +146,12 @@ export default {
       color: #3d3d3d;
       margin-top: 32px;
       justify-content: space-between;
+      .close {
+        width: 20px;
+        height: 20px;
+        margin-right: 4px;
+        cursor: pointer;
+      }
     }
     .subtitle {
       font-weight: 500;

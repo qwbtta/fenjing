@@ -22,15 +22,30 @@
         ></div>
         <span class="select_name">{{ item }}</span>
       </div>
-      <div v-if="selectIndex == 2" class="subtitle">计划选择</div>
+      <div v-if="selectIndex == 2" class="subtitle">拍摄计划选择</div>
       <el-select
         v-if="selectIndex == 2"
-        v-model="selectedPlan"
+        v-model="selectedValue"
         placeholder="请选择拍摄计划"
         class="select"
       >
         <el-option
-          v-for="item in shootingListOptions"
+          v-for="item in options"
+          :key="item.value"
+          :label="item.label"
+          :value="item.value"
+        >
+        </el-option>
+      </el-select>
+      <div v-if="selectIndex == 3" class="subtitle">拍摄通告选择</div>
+      <el-select
+        v-if="selectIndex == 3"
+        v-model="selectedValue"
+        placeholder="拍摄通告选择"
+        class="select"
+      >
+        <el-option
+          v-for="item in options"
           :key="item.value"
           :label="item.label"
           :value="item.value"
@@ -207,6 +222,167 @@
           </div>
         </div>
       </div>
+      <div v-if="confirmIndex == 3" class="shooting_notice column" id="toPDF">
+        <div class="title">
+          {{ announcementInfo.shootAnnounce.announceName }}
+        </div>
+        <div class="table_main">
+          <div class="info_row flex">
+            <div class="subtitle">拍摄日期</div>
+            <div class="content">
+              {{
+                dateTypeFormat(
+                  "YYYY年mm月dd日",
+                  new Date(announcementInfo.shootAnnounce.createTime)
+                )
+              }}
+            </div>
+            <div class="subtitle">第一镜</div>
+            <div class="content">
+              {{
+                dateTypeFormat(
+                  "HH:MM",
+                  new Date(announcementInfo.shootAnnounce.firstMirror)
+                )
+              }}
+            </div>
+          </div>
+          <div class="info_row flex">
+            <div class="subtitle">拍摄地点</div>
+            <div class="content">
+              {{ announcementInfo.shootAnnounce.shootAdress }}
+            </div>
+          </div>
+          <div class="info_row flex">
+            <div class="subtitle">天气</div>
+            <div class="content">
+              {{ announcementInfo.shootAnnounce.weather }}
+            </div>
+          </div>
+          <div
+            v-if="announcementInfo.shootAnnounce.remark"
+            class="info_row flex"
+          >
+            <div class="content">
+              {{ announcementInfo.shootAnnounce?.remark }}
+            </div>
+          </div>
+
+          <div
+            v-for="(item, index) in Math.ceil(
+              announcementInfo.shootAnnounceMemberList.length / 2
+            )"
+            :key="index + '一'"
+            class="info_row flex"
+          >
+            <div
+              class="flex"
+              style="width: 100%"
+              v-for="(
+                item2, index
+              ) in announcementInfo.shootAnnounceMemberList.slice(
+                (item - 1) * 2,
+                item * 2
+              )"
+              :key="index + '二'"
+            >
+              <div class="subtitle">职业类型{{ item2.memberType }}</div>
+              <div class="content">
+                {{ item2.memberName }}
+              </div>
+            </div>
+          </div>
+          <div
+            v-if="announcementInfo.shootAnnounceMemberList[0]?.remark"
+            class="info_row flex"
+          >
+            <div class="content">
+              {{ announcementInfo.shootAnnounceMemberList[0]?.remark }}
+            </div>
+          </div>
+        </div>
+        <div class="title">分组通告</div>
+        <div class="form_head" style="width: 100%">
+          <div
+            class="head_item"
+            :class="{ flexgrow: item != '到场时间' }"
+            v-for="(item, index) in creaCallHead"
+            :key="index"
+            :style="{ background: navigationColor }"
+          >
+            {{ item }}
+          </div>
+        </div>
+        <div
+          class="form_row"
+          v-for="(item, index) in announcementInfo.shootGroupAnnounceList"
+          :key="index"
+        >
+          <div>{{ item.groupName }}</div>
+          <div style="width: 120px; flex-grow: unset">
+            {{ dateTypeFormat("HH:MM", new Date(item.arriveTime)) }}
+          </div>
+          <div>{{ item.groupAdress }}</div>
+        </div>
+        <div class="remark_con">
+          {{ announcementInfo.shootGroupAnnounceList[0].remark }}
+        </div>
+
+        <div class="title">演员通告</div>
+        <div class="form_head" style="width: 100%">
+          <div
+            class="head_item"
+            :class="{ flexgrow: item != '到场时间' }"
+            v-for="(item, index) in actorHead"
+            :key="index"
+            :style="{ background: navigationColor }"
+          >
+            {{ item }}
+          </div>
+        </div>
+        <div
+          class="form_row"
+          v-for="(item, index) in announcementInfo.shootActorGroupAnnounceList"
+          :key="index"
+        >
+          <div>{{ item.groupName }}</div>
+          <div style="width: 120px; flex-grow: unset">
+            {{ dateTypeFormat("HH:MM", new Date(item.arriveTime)) }}
+          </div>
+          <div>{{ item.groupAdress }}</div>
+        </div>
+        <div class="remark_con">
+          {{ announcementInfo.shootActorGroupAnnounceList[0].remark }}
+        </div>
+
+        <div class="title">拍摄与日程</div>
+        <div class="form_head" style="width: 100%">
+          <div
+            class="head_item"
+            :class="{ flexgrow: item == '备注', w300: item == '场次' }"
+            v-for="(item, index) in dateHead"
+            :key="index"
+            :style="{ background: navigationColor }"
+          >
+            {{ item }}
+          </div>
+        </div>
+        <div
+          class="form_row"
+          v-for="(item, index) in announcementInfo.shootAnnouncePlanList"
+          :key="index"
+        >
+          <div style="width: 120px">
+            {{ dateTypeFormat("HH:MM", new Date(item.startTime)) }}-{{
+              dateTypeFormat("HH:MM", new Date(item.endTime))
+            }}
+          </div>
+          <div style="width: 300px">{{ item.planContent }}</div>
+          <div style="width: 120px">{{ scenerySlot[item.sceneryType] }}</div>
+          <div style="flex-grow: 1">{{ item.remark }}</div>
+        </div>
+        <div class="sup_line"></div>
+      </div>
     </div>
   </div>
 </template>
@@ -214,10 +390,16 @@
 <script>
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { shootPlanList, modelColumnConfig } from "@/assets/js/request";
+import {
+  shootPlanList,
+  modelColumnConfig,
+  shootAnnounceList,
+  announceInfo,
+} from "@/assets/js/request";
 import { mapState, mapMutations } from "vuex";
 import { commonMethods } from "@/assets/js/mixin.js";
 import { dateTypeFormat } from "@/assets/js/methods";
+import { scenerySlot } from "@/assets/js/data";
 export default {
   components: {},
   computed: {
@@ -232,8 +414,8 @@ export default {
       storyboardList: [],
       shootingList: [], //拍摄计划列表
       activeShootPlan: {}, //渲染展示的拍摄计划
-      shootingListOptions: [], //拍摄计划选项
-      selectedPlan: "",
+      options: [], //拍摄计划/拍摄通告选项
+      selectedValue: "",
       navigationColor: "#000",
       predefineColors: [
         "#000000",
@@ -245,6 +427,11 @@ export default {
         "#1e90ff",
         "#c71585",
       ],
+      announcementInfo: {}, //拍摄通告信息
+      creaCallHead: ["工作组", "到场时间", "地点"], //分组通告表头
+      actorHead: ["演员", "到场时间", "地点"], //演员通告表头
+      dateHead: ["时间", "场次", "内/外景", "备注"], //拍摄与日程通告表头
+      scenerySlot: scenerySlot,
     };
   },
   mixins: [commonMethods],
@@ -254,11 +441,14 @@ export default {
       this.selectIndex = index;
       if (index == 2) {
         this.getShootList();
+      } else if (index == 3) {
+        this.getShootAnnounceList();
       }
     },
     dateTypeFormat(format, time) {
       return dateTypeFormat(format, time);
     },
+    //获取分镜列表数据
     getShootList() {
       shootPlanList({
         projectId: this.activeProject.id,
@@ -288,14 +478,14 @@ export default {
             }
           }
 
-          this.shootingListOptions = [];
+          this.options = [];
           this.shootingList = res.data;
           for (let i = 0; i < res.data.length; i++) {
             let item = {
               value: res.data[i].id,
               label: res.data[i].planContent,
             };
-            this.shootingListOptions.push(item);
+            this.options.push(item);
           }
 
           for (let i = 0; i < this.shootingList.length; i++) {
@@ -312,6 +502,19 @@ export default {
         });
       });
     },
+    //获取通告列表数据
+    getShootAnnounceList() {
+      shootAnnounceList({ projectId: this.activeProject.id }).then((res) => {
+        let arr = [...res.data.announced, ...res.data.announcing];
+        for (let i = 0; i < arr.length; i++) {
+          let item = {
+            value: arr[i].id,
+            label: arr[i].announceName,
+          };
+          this.options.push(item);
+        }
+      });
+    },
     getPreview() {
       this.confirmIndex = this.selectIndex;
       switch (this.selectIndex) {
@@ -322,9 +525,10 @@ export default {
           this.getSboardList();
           break;
         case 2:
-          console.log(this.shootingList);
-          console.log(this.selectedPlan);
           this.getShootPlan();
+          break;
+        case 3:
+          this.getShootNotice();
           break;
         default:
           this.getSboardList();
@@ -371,7 +575,7 @@ export default {
     },
     async getShootPlan() {
       for (let i = 0; i < this.shootingList.length; i++) {
-        if (this.shootingList[i].id == this.selectedPlan) {
+        if (this.shootingList[i].id == this.selectedValue) {
           this.activeShootPlan = this.shootingList[i];
           break;
         }
@@ -401,6 +605,18 @@ export default {
       }
       console.log(this.activeShootPlan, " this.activeShootPlan");
     },
+    getShootNotice() {
+      announceInfo({ announceId: this.selectedValue }).then((res) => {
+        if (res.code == 200) {
+          this.announcementInfo = res.data;
+        } else {
+          this.$message({
+            message: "请求错误",
+            type: "error",
+          });
+        }
+      });
+    },
     async getSboardList() {
       this.storyboardList = JSON.parse(
         JSON.stringify(this.activeProject.storyboardList)
@@ -427,6 +643,10 @@ export default {
     },
   },
   created() {
+    if (!this.activeProject?.storyboardList) {
+      this.$router.push("/");
+      return;
+    }
     this.getSboardList();
   },
 };
@@ -584,6 +804,29 @@ input,
         margin-left: 10px;
       }
     }
+    .form_head {
+      display: flex;
+      .head_item {
+        width: 120px;
+        height: 50px;
+        text-align: center;
+        line-height: 50px;
+        background: #f4f6f7;
+        font-weight: 600;
+        font-size: 16px;
+        color: #fff;
+      }
+      .flexgrow {
+        flex-grow: 1;
+      }
+      .w300 {
+        width: 300px;
+      }
+    }
+    .sup_line {
+      border-top: 1px solid #000;
+      width: 100%;
+    }
     .mirrorList {
       display: flex;
       flex-direction: column;
@@ -591,19 +834,7 @@ input,
       .width300 {
         width: 300px !important;
       }
-      .form_head {
-        display: flex;
-        .head_item {
-          width: 120px;
-          height: 50px;
-          text-align: center;
-          line-height: 50px;
-          background: #f4f6f7;
-          font-weight: 600;
-          font-size: 16px;
-          color: #fff;
-        }
-      }
+
       .plan_info {
         height: 40px;
         text-align: center;
@@ -706,6 +937,66 @@ input,
             margin-top: 22px;
           }
         }
+      }
+    }
+    .shooting_notice {
+      background: #fff;
+      min-height: calc(100% - 100px);
+      width: 1270px;
+      padding: 20px;
+      align-items: center;
+      margin: 0 auto;
+      .table_main {
+        width: 100%;
+        height: 100%;
+        border-top: 1px solid #000;
+        border-left: 1px solid #000;
+      }
+      .title {
+        font-weight: 600;
+        font-size: 22px;
+        color: #3d3d3d;
+        margin: 20px 0;
+      }
+      .info_row {
+        width: 100%;
+        border-bottom: 1px solid #000;
+        .subtitle {
+          width: 120px;
+          height: 32px;
+          line-height: 32px;
+          border-right: 1px solid #000;
+          flex-shrink: 0;
+          padding-left: 4px;
+        }
+        .content {
+          min-height: 32px;
+          line-height: 32px;
+          border-right: 1px solid #000;
+          width: 100%;
+          padding-left: 4px;
+        }
+      }
+      .form_row {
+        background: #fff;
+        display: flex;
+        border-top: 1px solid #000;
+        border-left: 1px solid #000;
+        width: 100%;
+        height: 32px;
+        line-height: 32px;
+        > div {
+          padding-left: 4px;
+          border-right: 1px solid #000;
+          width: 555px;
+        }
+      }
+      .remark_con {
+        border: 1px solid #000;
+        width: 100%;
+        min-height: 32px;
+        padding-left: 4px;
+        line-height: 32px;
       }
     }
   }

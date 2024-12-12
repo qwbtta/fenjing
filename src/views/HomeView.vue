@@ -6,7 +6,56 @@
         <img src="@/assets/img/homePage/message.png" alt="" />
       </div>
     </div>
-    <div class="sort_area flex"><span class="subtitle">排序</span></div>
+    <div class="sort_area flex">
+      <span class="subtitle">排序</span>
+      <div class="sort_type" id="sortType" @click="checkShowSortPanel">
+        {{ sortType[0] == 0 ? "创建时间" : "修改时间" }}
+        <div
+          v-show="showSortPanel"
+          id="sortPanel"
+          @click.stop
+          class="sort_panel"
+        >
+          <div class="sort_row flex" @click="changeSort(0, 0)">
+            <img
+              v-if="sortType[0] == 0"
+              src="@/assets/img/operatePage/checked_green.png"
+              alt=""
+            />
+            <span>创建时间</span>
+          </div>
+          <div class="sort_row flex" @click="changeSort(0, 1)">
+            <img
+              v-if="sortType[0] == 1"
+              src="@/assets/img/operatePage/checked_green.png"
+              alt=""
+            />
+            <span>修改时间</span>
+          </div>
+          <div class="devide_line"></div>
+          <div class="sort_row flex" @click="changeSort(1, 0)">
+            <img
+              v-if="sortType[1] == 0"
+              src="@/assets/img/operatePage/checked_green.png"
+              alt=""
+            />
+            <span>从早到晚</span>
+          </div>
+          <div
+            class="sort_row flex"
+            @click="changeSort(1, 1)"
+            style="margin-bottom: 0"
+          >
+            <img
+              v-if="sortType[1] == 1"
+              src="@/assets/img/operatePage/checked_green.png"
+              alt=""
+            />
+            <span>从晚到早</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="project_list">
       <div class="normal_item project_add">
@@ -80,8 +129,10 @@
                     <div class="panel_item" @click.stop="copyProject(item2)">
                       复制分镜到新项目
                     </div>
-                    <div class="panel_item">移到回收站</div>
-                    <div class="panel_item" @click="moveProject(item2.id)">
+                    <div class="panel_item" @click.stop="deleteProject(item2)">
+                      移到回收站
+                    </div>
+                    <div class="panel_item" @click.stop="moveProject(item2.id)">
                       移出组
                     </div>
                   </div>
@@ -115,7 +166,7 @@
         @dragstart="dragStart($event)"
         @dragend="dragEnd($event)"
         :data-id="item.id"
-        class="normal_item project_item"
+        class="normal_item"
         v-for="item in projectList"
         :key="item.id"
         @click="goStoryboard(item)"
@@ -135,7 +186,16 @@
           <div class="operation_area">
             <img class="more" src="@/assets/img/homePage/more.png" alt="" />
             <div class="transparent_back">
-              <div class="operation_panel">
+              <div v-if="item.unauthorized" class="operation_panel">
+                <div
+                  class="panel_item"
+                  style="border: unset"
+                  @click.stop="exitProject(item)"
+                >
+                  退出项目
+                </div>
+              </div>
+              <div v-else class="operation_panel">
                 <div class="panel_item" @click.stop="goRename('项目', item)">
                   重命名
                 </div>
@@ -190,6 +250,7 @@ import {
   deleteProject,
   copyProject,
   moveProjectToGroup,
+  outProject,
 } from "@/assets/js/request";
 import bus from "@/assets/js/eventBus.js";
 import Rename from "@/components/Rename.vue";
@@ -202,6 +263,8 @@ export default {
 
   data() {
     return {
+      sortType: [0, 0], //第一项 0-创建时间 1-修改时间 第二项0-从早到晚 第二项1-从晚到早
+      showSortPanel: false, //排序弹窗
       projectGroup: [], //组列表
       projectList: [], //项目列表
       dragItemId: "", //当前拖拽元素
@@ -238,6 +301,28 @@ export default {
     dragEnd() {
       this.dragItemId = "";
     },
+    changeSort(index, value) {
+      this.$set(this.sortType, index, value);
+      this.getProjectList();
+    },
+    checkShowSortPanel() {
+      this.showSortPanel = !this.showSortPanel;
+      if (this.showSortPanel) {
+        const sortPanel = document.getElementById("sortPanel");
+        const sortType = document.getElementById("sortType");
+
+        window.outsideClickListener = document.addEventListener(
+          "click",
+          (e) => {
+            // 如果点击的区域不在弹框内部;
+            if (!sortPanel.contains(e.target) && e.target !== sortType) {
+              // 隐藏弹框
+              this.showSortPanel = false;
+            }
+          }
+        );
+      }
+    },
     getTime(timestamp) {
       const date = new Date(timestamp);
       let MM =
@@ -251,8 +336,13 @@ export default {
       return `${MM}-${DD} ${hh}:${mm}`;
     },
     getProjectList() {
+      let arr = [
+        [1, 2],
+        [3, 4],
+      ];
+      let sortType = arr[this.sortType[0]][this.sortType[1]];
       getProjectList({
-        sortType: 1,
+        sortType: sortType,
         isDelete: "0",
       }).then((res) => {
         let tempProjectList = [];
@@ -267,6 +357,9 @@ export default {
         // 写两个循环是因为 在这个接口返回的数据结构下 判断文件属于哪个文件夹时 如果写在一个循环里  会造成文件夹数组还没有读完 文件归属判断出问题
         //文件
         for (let i = 0; i < res.data.length; i++) {
+          if (res.data[i].isCooperation) {
+            res.data[i].unauthorized = true;
+          }
           //没有放入组内的文件
           if (0 == res.data[i].projectType) {
             if (0 == res.data[i].parentId || !res.data[i].parentId) {
@@ -281,8 +374,6 @@ export default {
             }
           }
         }
-        console.log(tempProjectGroup);
-        console.log(tempProjectList);
         this.projectGroup = tempProjectGroup;
         this.projectList = tempProjectList;
       });
@@ -343,11 +434,22 @@ export default {
         this.errorHandle(res);
       });
     },
+    exitProject(item) {
+      outProject({ forId: item.id }).then((res) => {
+        this.errorHandle(res);
+        this.getProjectList();
+      });
+    },
     errorHandle(res) {
       if (res.code != 200) {
         this.$message({
           message: res.msg,
           type: "error",
+        });
+      } else {
+        this.$message({
+          message: "操作成功",
+          type: "success",
         });
       }
     },
@@ -358,8 +460,7 @@ export default {
       this.showRename = true;
     },
     //确认重命名
-    renameConfirm(e) {
-      console.log(e);
+    renameConfirm() {
       this.getProjectList();
       this.showRename = false;
     },
@@ -445,6 +546,49 @@ export default {
       font-weight: 500;
       font-size: 12px;
       color: #adadad;
+    }
+    .sort_type {
+      position: relative;
+      font-weight: 500;
+      font-size: 12px;
+      color: #646464;
+      margin-left: 20px;
+      cursor: pointer;
+      .sort_panel {
+        position: absolute;
+        left: -12px;
+        top: 30px;
+        width: 120px;
+        height: 186px;
+        background: #ffffff;
+        box-shadow: 0px 1px 20px 0px rgba(0, 0, 0, 0.1);
+        border-radius: 6px;
+        z-index: 3;
+        padding: 13px 15px;
+        .sort_row {
+          height: 20px;
+          width: 100%;
+          margin-bottom: 20px;
+          font-size: 14px;
+          color: #3d3d3d;
+          cursor: pointer;
+          > img {
+            width: 16px;
+            height: 16px;
+            margin-right: 10px;
+          }
+          > span {
+            margin-left: auto;
+            margin-right: 8px;
+          }
+        }
+        .devide_line {
+          width: 100%;
+          height: 0px;
+          border-top: 1px solid #e4e5ee;
+          margin-bottom: 20px;
+        }
+      }
     }
   }
   .project_list {
@@ -660,8 +804,6 @@ export default {
           }
         }
       }
-    }
-    .project_item {
     }
   }
 }

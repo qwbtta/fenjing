@@ -1,5 +1,5 @@
 <template>
-  <div class="NoticeImprove">
+  <div class="notice_scroll_area">
     <div class="sheet_box">
       <div class="box_left">
         <span class="title">分组通告</span>
@@ -97,7 +97,7 @@
             :key="index"
             v-show="item.type == 1 && item.isDelete == '0'"
           >
-            <el-select
+            <!-- <el-select
               style="width: 165px; margin-right: 14px"
               v-model="item.groupName"
               placeholder="请选择"
@@ -111,7 +111,14 @@
                 :value="item.value"
               >
               </el-option>
-            </el-select>
+            </el-select> -->
+            <input
+              style="width: 165px; margin-right: 14px"
+              type="text"
+              placeholder="请输入"
+              v-model="item.groupName"
+              :readonly="activeProject.banEdit"
+            />
             <input
               style="width: 236px"
               type="text"
@@ -167,6 +174,7 @@ export default {
   },
   data() {
     return {
+      firstTime: true, //数据是否首次变化  用来取消watch监听中首次赋值的影响
       form2: [],
       groupNotes: "",
       actorNotes: "",
@@ -190,8 +198,12 @@ export default {
   watch: {
     form2: {
       handler: function (newVal, oldVal) {
-        this.activeNotice.shootGroupAnnounceList = newVal;
-        this.SET_ACTIVENOTICE(this.activeNotice);
+        console.log(this.firstTime, "this.firstTimewatchwatch");
+        if (!this.firstTime) {
+          this.activeNotice.shootGroupAnnounceList = newVal;
+          this.SET_ACTIVENOTICE(this.activeNotice);
+        }
+        if (this.firstTime) this.firstTime = false;
       },
       deep: true,
     },
@@ -228,13 +240,12 @@ export default {
   },
   created() {
     //接口数据设计的上传一个数组  回来两个数组  只能手动调整下
-    // if (this.activeNotice.shootGroupAnnounceList.length == 0) {
-    //   this.addRow("0");
-    // }
-    // console.log(this.activeNotice, "this.activeNotice");
-    // if (this.activeNotice.shootActorGroupAnnounceList.length == 0) {
-    //   this.addRow("1");
-    // }
+    if (this.activeNotice.shootGroupAnnounceList.length == 0) {
+      this.addRow("0");
+    }
+    if (this.activeNotice.shootActorGroupAnnounceList.length == 0) {
+      this.addRow("1");
+    }
     this.form2 = [
       ...this.form2,
       ...JSON.parse(JSON.stringify(this.activeNotice.shootGroupAnnounceList)),
@@ -243,6 +254,7 @@ export default {
       ),
     ];
     for (let i = 0; i < this.form2.length; i++) {
+      //接口和ui设计冲突导致的多余处理
       if (this.form2[i].type == 1) {
         this.actorNotes = this.form2[i]?.remark;
       }
@@ -250,7 +262,7 @@ export default {
         this.groupNotes = this.form2[i]?.remark;
       }
     }
-    console.log(this.form2, "this.form2");
+    console.log(this.firstTime, "this.firstTime2222");
   },
 };
 </script>

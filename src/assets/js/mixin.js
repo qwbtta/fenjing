@@ -43,6 +43,9 @@ export const commonMethods = {
                     tempHead.push(item);
                   }
                 }
+                 // 按 sort属性升序排序
+                tempHead.sort((a, b) =>  a.sort - b.sort);
+         
                 for (let x = 0; x < res.data.length; x++) {
                   let item = {
                     rowId: res.data[x].id,

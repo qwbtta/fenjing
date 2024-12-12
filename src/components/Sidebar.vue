@@ -20,12 +20,29 @@
     <div class="column user_con">
       <img
         class="avatar"
-        src="@/assets/img/homePage/default_avatar.png"
+        :src="
+          userInfo.avatar || require('@/assets/img/homePage/default_avatar.png')
+        "
         alt=""
       />
       <span class="nick_name">{{ userInfo?.nickname }}</span>
       <div class="transparent_back">
         <div class="panel">
+          <div class="info_con flex">
+            <img
+              :src="
+                userInfo.avatar ||
+                require('@/assets/img/homePage/default_avatar.png')
+              "
+              alt=""
+            />
+            <span>{{ userInfo?.nickname }}</span>
+          </div>
+          <div class="devide_line"></div>
+          <div class="item_row flex" @click="showInfoSet = true">
+            <img src="@/assets/img/homePage/info_set.png" alt="" />
+            账户设置
+          </div>
           <div class="item_row flex" @click="toLogOut">
             <img src="@/assets/img/homePage/logOut.png" alt="" />
             退出登录
@@ -33,12 +50,23 @@
         </div>
       </div>
     </div>
+    <InfoSet
+      v-if="showInfoSet"
+      @close="
+        showInfoSet = false;
+        toGetUserInfo();
+      "
+    />
   </div>
 </template>
   
   <script>
-import { getUserInfo, userLogOff } from "@/assets/js/request";
+import { getUserInfo, loginOut } from "@/assets/js/request";
+import InfoSet from "@/components/InfoSet.vue";
 export default {
+  components: {
+    InfoSet,
+  },
   data() {
     return {
       activeIndex: 0,
@@ -57,6 +85,7 @@ export default {
         },
       ],
       userInfo: {},
+      showInfoSet: false, //显示账号设置页面
     };
   },
   methods: {
@@ -69,10 +98,18 @@ export default {
     },
     toLogOut() {
       let token = localStorage.getItem("token");
-      userLogOff({ token: token }).then((res) => {
+      loginOut({ token: token }).then((res) => {
         localStorage.removeItem("token");
       });
-      this.$router.push("/");
+      this.$router.push("/login");
+    },
+    toGetUserInfo() {
+      let token = localStorage.getItem("token");
+      if (token) {
+        getUserInfo().then((res) => {
+          this.userInfo = res.data;
+        });
+      }
     },
   },
   watch: {
@@ -85,9 +122,7 @@ export default {
     },
   },
   created() {
-    getUserInfo().then((res) => {
-      this.userInfo = res.data;
-    });
+    this.toGetUserInfo();
   },
 };
 </script>
@@ -162,26 +197,47 @@ export default {
     .transparent_back {
       display: none;
       position: absolute;
-      top: -6px;
+      top: -98px;
       right: -218px;
       padding-left: 44px;
     }
     .panel {
       width: 182px;
+      height: 162px;
       background: #ffffff;
       box-shadow: 0px 1px 20px 0px rgba(0, 0, 0, 0.1);
       border-radius: 6px;
       z-index: 3;
-      padding: 20px 0;
+      padding: 0 12px;
+      .info_con {
+        padding-top: 15px;
+        > img {
+          width: 38px;
+          height: 38px;
+          margin-right: 13px;
+        }
+        > span {
+          font-weight: 600;
+          font-size: 14px;
+          color: #333333;
+        }
+      }
+      .devide_line {
+        width: 150px;
+        height: 0px;
+        border: 1px solid #efefef;
+        margin: 16px 0;
+      }
       .item_row {
         font-weight: 600;
         font-size: 14px;
         color: #3d3d3d;
+        margin-bottom: 20px;
         cursor: pointer;
         > img {
           width: 16px;
           height: 16px;
-          margin-left: 20px;
+          margin-left: 9px;
           margin-right: 12px;
         }
       }

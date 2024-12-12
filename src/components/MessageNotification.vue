@@ -29,14 +29,39 @@
         </div>
         <div class="list_right">
           <div class="info_item" v-for="(item, index) in infoList" :key="index">
-            <div class="title">联系人申请</div>
+            <div class="title">{{ typeCheck(item.type) }}</div>
             <div class="info_main">{{ item.messageContent }}</div>
-            <div class="btn_groups flex">
-              <div class="btn btn1" @click="toMessageApply(item.id, '1')">
+            <div
+              v-if="item.type == 'MESSAGE_COLLABORATION'"
+              class="btn_groups flex"
+            >
+              <div
+                v-if="item.isApply == 0"
+                class="btn btn1"
+                @click="toMessageApply(item.id, '2')"
+              >
+                拒绝
+              </div>
+              <div
+                v-if="item.isApply == 0"
+                class="btn btn2"
+                @click="toMessageApply(item.id, '1')"
+              >
                 同意
               </div>
-              <div class="btn btn2" @click="toMessageApply(item.id, '2')">
-                拒绝
+              <div
+                v-if="item.isApply == 2"
+                class="btn btn1 not_allowed"
+                style="margin-left: auto"
+              >
+                已拒绝
+              </div>
+              <div
+                v-if="item.isApply == 1"
+                class="btn btn2 not_allowed"
+                style="margin-left: auto"
+              >
+                已同意
               </div>
             </div>
           </div>
@@ -61,19 +86,26 @@ export default {
       if (newVal == "协作") {
         this.getList("MESSAGE_COLLABORATION");
       } else if (newVal == "公告") {
-        this.getList("公告：MESSAGE_ANNOUNCE");
+        this.getList("MESSAGE_ANNOUNCE");
       }
     },
   },
   methods: {
+    typeCheck(type) {
+      let obj = {
+        MESSAGE_COLLABORATION: "联系人申请",
+        MESSAGE_COLLABORATION_APPLY: "信息回复",
+        MESSAGE_PROJECT_COLLABORATION: "项目协作",
+        MESSAGE_ANNOUNCE: "公告",
+      };
+      return obj[type] || "公告";
+    },
     getList(type) {
       let params = {
-        pageSize: "1",
-        pageNum: "1",
         type: type, //（消息类型---公告：MESSAGE_ANNOUNCE 协作 ： MESSAGE_COLLABORATION）
       };
       messageList(params).then((res) => {
-        this.infoList = res.data.rows;
+        this.infoList = res.data;
       });
     },
     toMessageApply(id, type) {
@@ -81,7 +113,9 @@ export default {
         messageId: id,
         isApply: type, // (1同意  2拒绝)
       };
-      messageApply(params).then((res) => {});
+      messageApply(params).then((res) => {
+        this.getList("MESSAGE_COLLABORATION");
+      });
     },
   },
   created() {
@@ -151,6 +185,7 @@ export default {
           background: #f4f6f7;
           border-radius: 8px;
           padding: 15px;
+          margin-bottom: 16px;
           .title {
             height: 25px;
             font-weight: 600;
@@ -181,6 +216,9 @@ export default {
             .btn2 {
               color: #ffffff;
               background: #12db34;
+            }
+            .not_allowed {
+              cursor: not-allowed;
             }
           }
         }

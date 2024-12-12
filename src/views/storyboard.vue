@@ -4,7 +4,7 @@
     <div class="main">
       <div class="head_row flex">
         <div class="flex">
-          <span class="head_title">我的项目 </span>
+          <span class="head_title">我的项目</span>
           <img
             class="tips"
             @click="showTips = !showTips"
@@ -133,12 +133,9 @@
                   >
                     <img class="user_img" :src="item2.fileUrl" alt="" />
                     <div class="mask" v-if="!activeProject.banEdit">
-                      <div
-                        class="mask_item sort"
-                        @click="selectImg('dealRepalce', item, colObj, item2)"
-                      >
+                      <div class="mask_item sort">
                         <img
-                          src="@/assets/img/operatePage/replace.png"
+                          src="@/assets/img/operatePage/sort.svg"
                           alt=""
                         />排序
                       </div>
@@ -161,7 +158,7 @@
                         class="mask_add"
                         @click="selectImg('dealAdd', item, colObj)"
                       >
-                        添加
+                        添加更多图片
                       </div>
                     </div>
                   </div>
@@ -210,7 +207,12 @@
         <div @click="$router.push('/storyVersion')" class="router_btn flex">
           <span>预览故事版</span>
         </div>
-        <div class="footer_close" @click="showTips = false">关闭</div>
+        <img
+          class="footer_close"
+          @click="showTips = false"
+          src="@/assets/img/operatePage/close.png"
+          alt=""
+        />
       </div>
     </div>
   </div>
@@ -221,8 +223,6 @@ import draggable from "vuedraggable";
 import FuncHead from "@/components/FuncHead.vue";
 import { mapState, mapMutations } from "vuex";
 import {
-  getMirrorList,
-  modelColumnConfig,
   createMirror,
   updateMirror,
   deleteMirror,
@@ -389,12 +389,20 @@ export default {
     },
 
     headChange(e) {
+      console.log(e.moved.newIndex, " e.moved.newIndex");
+      if (e.moved.newIndex == 0) {
+        this.$message({
+          message: "不能将列移动至排序之前",
+          type: "warning",
+        });
+        return;
+      }
       let params = {
         modelId: this.activeProject.modelId,
         projectId: this.activeProject.id,
         modelColumnConfigId: e.moved.element.colId,
         // modelColumnConfigId: "f41dd78b-7e8e-48c7-9713-10f9ae6652b2",
-        sort: e.moved.newIndex,
+        sort: e.moved.newIndex - 1,
       };
       moveModelColumnConfig(params).then((res) => {
         this.toGetMirrorList();
@@ -728,6 +736,14 @@ input,
               left: 50%;
               bottom: 0;
               transform: translateX(-50%);
+              width: 120px;
+              height: 26px;
+              line-height: 26px;
+              font-size: 12px;
+              color: #3d3d3d;
+              text-align: center;
+              border-radius: 8px;
+              background: #f4f6f7;
             }
           }
         }

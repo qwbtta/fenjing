@@ -1,5 +1,5 @@
 <template>
-  <div class="NoticePlan">
+  <div class="notice_scroll_area">
     <div class="sheet_box">
       <div class="box_left">
         <span class="title">通告拍摄计划</span>
@@ -86,6 +86,7 @@
             type="text"
             placeholder="请输入"
             v-model="notes"
+            @input="setNotes"
             :readonly="activeProject.banEdit"
           />
         </div>
@@ -159,6 +160,11 @@ export default {
         }
       }
     },
+    setNotes() {
+      for (let i = 0; i < this.form3.length; i++) {
+        this.form3[i].remark = this.notes;
+      }
+    },
     getShootList() {
       shootPlanList({
         projectId: this.activeProject.id,
@@ -179,6 +185,7 @@ export default {
   created() {
     this.getShootList();
     this.form3 = this.activeNotice.shootAnnouncePlanList;
+    this.notes = this.form3[0].remark;
     if (this.activeNotice.shootAnnouncePlanList.length == 0) {
       this.addRow();
     }
