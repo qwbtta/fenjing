@@ -315,6 +315,13 @@ export const getModelList = () => {
   return  axios.get(baseUrl + "/storyBoard/model/modelList")
 }
 
+// 列选项设置
+export const mirrorConfig = (params) => {
+  return  axios.get(baseUrl + "/storyBoard/model/mirrorConfig",{
+      params: params
+  })
+}
+
 // 分镜列表
 export const getMirrorList = (params) => {
   return  axios.get(baseUrl + "/storyBoard/mirror/mirrorList",{
@@ -369,9 +376,29 @@ export const updateFileSort = (params) => {
   return  postJSONData(baseUrl + "/storyBoard/file/updateFileSort",params)
 }
 
+// 新增模板
+export const addModel = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/model/addModel",params)
+}
+
+// 项目内保存模板
+export const insertProjectModel = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/model/insertProjectModel",params)
+}
+
 // 编辑模板
 export const updateModel = (params) => {
   return  postJSONData(baseUrl + "/storyBoard/model/updateModel",params)
+}
+
+// 项目或者模板内列设置编辑或新增
+export const updateColumnConfig = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/model/updateColumnConfig",params)
+}
+
+// 项目或者模板内列设置删除
+export const deleteColumnConfig = (params) => {
+  return  postJSONData(baseUrl + "/storyBoard/model/deleteColumnConfig",params)
 }
 
 // 故事版列表

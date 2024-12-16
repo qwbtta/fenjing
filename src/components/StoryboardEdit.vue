@@ -113,7 +113,7 @@ export default {
     frameChange(e) {
       updateFileSort({
         fileId: e.moved.element.id,
-        sort: e.moved.newIndex,
+        sort: e.moved.newIndex + 1,
       }).then((res) => {
         this.toGetMirrorList();
       });
@@ -343,6 +343,9 @@ export default {
               height: 16px;
               margin-bottom: 2px;
             }
+          }
+          .sort {
+            cursor: move;
           }
         }
       }

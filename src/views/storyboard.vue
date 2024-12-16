@@ -20,12 +20,59 @@
         <!-- <div class="btn_type1" style="margin-left: auto">
           <img src="@/assets/img/operatePage/sort.png" alt="" />
           分镜设置
-        </div>
-        <div class="btn_type1">
-          <img src="@/assets/img/operatePage/sort.png" alt="" />
-          列设置
-          <div class="menu_panel"></div>
         </div> -->
+        <div
+          id="colBtn"
+          @click="checkMenuPanel"
+          style="margin-left: auto"
+          class="btn_type1"
+        >
+          <img src="@/assets/img/operatePage/set.png" alt="" />
+          <span> 列设置</span>
+          <div v-show="showMenuPanel" @click.stop class="menu_panel">
+            <div id="menuPanel" class="menu_panel_head flex">
+              <span class="head_title">列设置</span>
+              <div class="save_model" @click="showSaveModel = true">
+                保存模版
+              </div>
+            </div>
+            <draggable
+              animation="300"
+              v-model="modelColumnConfig"
+              class="column"
+              handle=".sort"
+              @change="colHeadChange"
+            >
+              <div
+                v-for="item in modelColumnConfig"
+                :key="item.id"
+                class="column_item flex"
+              >
+                <img
+                  @click="
+                    changeHide('edit', {
+                      id: item.id,
+                      isHidden: item.isHidden == '0' ? '1' : '0',
+                    })
+                  "
+                  class="staus_icon"
+                  :src="
+                    item.isHidden == '1'
+                      ? require('@/assets/img/operatePage/hide.png')
+                      : require('@/assets/img/operatePage/show.png')
+                  "
+                  alt=""
+                />
+                <span class="columnName"> {{ item.columnName }}</span>
+                <img
+                  class="sort"
+                  src="@/assets/img/operatePage/sort2.png"
+                  alt=""
+                />
+              </div>
+            </draggable>
+          </div>
+        </div>
       </div>
       <div class="storyboard_form" v-if="storyboardList.length > 0">
         <div class="form_head">
@@ -37,21 +84,88 @@
             @change="headChange"
           >
             <div
-              class="head_item"
+              class="head_item flex"
               v-for="(item, index) in storyboardHead"
               :key="index"
               :class="[item.specialClass, { index: item.colId == 'index' }]"
             >
-              {{ item.colName }}
+              <span class="colName"> {{ item.colName }}</span>
+              <div v-if="item.colName != '排序'" class="set_con" @click.stop>
+                <img
+                  class="arrow"
+                  src="@/assets/img/operatePage/left_arrow.png"
+                  alt=""
+                />
+                <div class="set_panel">
+                  <div
+                    class="set_panel_row flex"
+                    @click="
+                      showEditColPanel = item.colId;
+                      colTitle = item.colName;
+                    "
+                  >
+                    <img src="@/assets/img/operatePage/edit.png" alt="" />
+                    编辑列
+                  </div>
+                  <div
+                    class="set_panel_row flex"
+                    @click="
+                      changeHide('edit', {
+                        id: item.colId,
+                        isHidden: '1',
+                      })
+                    "
+                  >
+                    <img src="@/assets/img/operatePage/hide.png" alt="" />
+                    隐藏列
+                  </div>
+                  <div
+                    v-if="item.isSystem == '1'"
+                    class="set_panel_row flex"
+                    @click="deleteCol(item)"
+                  >
+                    <img src="@/assets/img/homePage/recycle_bin.png" alt="" />
+                    删除列
+                  </div>
+                </div>
+              </div>
+              <div
+                v-if="item.colId == showEditColPanel"
+                @click.stop=""
+                class="add_panel"
+              >
+                <div class="subtitle">列标题</div>
+                <input type="text" v-model="colTitle" />
+
+                <div class="btn_con flex">
+                  <div
+                    class="btn cancel"
+                    @click.stop="
+                      showEditColPanel = null;
+                      colTitle = '';
+                    "
+                  >
+                    取消
+                  </div>
+                  <div
+                    class="btn confirm"
+                    @click.stop="editConfirm(item.colId)"
+                  >
+                    确认
+                  </div>
+                </div>
+              </div>
             </div>
           </draggable>
-          <!-- <div @click="showAddPanel = !showAddPanel" class="head_item add_col">
-            +
-
+          <div
+            @click="showAddPanel = !showAddPanel"
+            class="head_item flex add_col"
+          >
+            <img class="arrow" src="@/assets/img/operatePage/add.png" alt="" />
             <div v-if="showAddPanel" @click.stop="" class="add_panel">
               <div class="subtitle">列标题</div>
               <input type="text" v-model="colTitle" />
-              <div class="subtitle">列类型</div>
+              <!-- <div class="subtitle">列类型</div>
               <el-select
                 class="el_elect"
                 v-model="value"
@@ -65,15 +179,21 @@
                   :value="item.value"
                 >
                 </el-option>
-              </el-select>
+              </el-select> -->
               <div class="btn_con flex">
-                <div class="btn cancel" @click.stop="showAddPanel = false">
+                <div
+                  class="btn cancel"
+                  @click.stop="
+                    showAddPanel = false;
+                    colTitle = '';
+                  "
+                >
                   取消
                 </div>
                 <div class="btn confirm" @click.stop="addConfirm">确认</div>
               </div>
             </div>
-          </div> -->
+          </div>
         </div>
 
         <draggable
@@ -90,9 +210,12 @@
           >
             <div
               class="list_item flex"
-              :class="{ width300: '内容,画面'.includes(colObj.name) }"
               v-for="(colObj, index3) in item.colObj"
               :key="index3"
+              :class="{
+                width300:
+                  '内容,画面'.includes(colObj.name) || colObj.isSystem == '1',
+              }"
             >
               <img
                 v-if="!activeProject.banEdit"
@@ -104,7 +227,7 @@
               <img
                 v-if="colObj.name == '排序'"
                 class="change_order"
-                src="@/assets/img/operatePage/sort.png"
+                src="@/assets/img/operatePage/sort2.png"
                 alt=""
               />
               <div v-else-if="colObj.name == '镜号'" class="editDiv">
@@ -215,12 +338,14 @@
         />
       </div>
     </div>
+    <SaveModel v-if="showSaveModel" @close="showSaveModel = false" />
   </div>
 </template>
     
     <script>
 import draggable from "vuedraggable";
 import FuncHead from "@/components/FuncHead.vue";
+import SaveModel from "@/components/SaveModel.vue";
 import { mapState, mapMutations } from "vuex";
 import {
   createMirror,
@@ -231,20 +356,29 @@ import {
   updateFileSort,
   insertMirror,
   moveModelColumnConfig,
+  addModel,
+  updateModel,
+  mirrorConfig,
+  updateColumnConfig,
+  deleteColumnConfig,
 } from "@/assets/js/request";
 import { commonMethods } from "@/assets/js/mixin.js";
 export default {
   components: {
     draggable,
     FuncHead,
+    SaveModel,
   },
   computed: {
     ...mapState(["activeProject"]),
   },
   data() {
     return {
+      showMenuPanel: false, //列设置表盘
+      showEditColPanel: null, //编辑列 的操作表盘
       storyboardHead: [], //表头
       storyboardList: [], //数据列表
+      modelColumnConfig: [], //列设置
       showAddPanel: false, //添加列
       colTitle: "", //列标题
       showTips: false,
@@ -260,11 +394,50 @@ export default {
       ],
       value: "文本",
       timer: null,
+      showSaveModel: false, //保存模板弹窗
     };
   },
   mixins: [commonMethods],
   methods: {
     ...mapMutations(["SET_ACTIVEPROJECT"]),
+    changeHide(type, obj) {
+      let params = { ...obj };
+      if (type == "add") {
+        params.projectId = this.activeProject.id;
+        params.modelId = this.activeProject.modelId;
+      }
+      updateColumnConfig(params).then((res) => {
+        this.toGetMirrorList();
+      });
+    },
+    deleteCol(item) {
+      deleteColumnConfig({ id: item.colId }).then((res) => {
+        this.toGetMirrorList();
+      });
+    },
+    checkMenuPanel() {
+      this.showMenuPanel = !this.showMenuPanel;
+      let _this = this;
+      function listen(e) {
+        const menuPanel = document.getElementById("menuPanel");
+        const colBtn = document.getElementById("colBtn");
+        // 如果点击的区域不在弹框内部;
+        if (
+          !menuPanel.contains(e.target) &&
+          !colBtn.contains(e.target) &&
+          e.target !== colBtn
+        ) {
+          // 隐藏弹框
+          _this.showMenuPanel = false;
+          document.removeEventListener("click", listen);
+        }
+      }
+      if (this.showMenuPanel) {
+        document.addEventListener("click", listen);
+      } else {
+        document.removeEventListener("click", listen);
+      }
+    },
     addRow(rows) {
       createMirror({
         projectId: this.activeProject.id,
@@ -272,7 +445,6 @@ export default {
       }).then((res) => {
         this.toGetMirrorList();
       });
-      console.log(this.storyboardList);
     },
     selectImg(dealFunc, item, colObj, item2) {
       if (document.getElementById("fileInput")) {
@@ -321,17 +493,6 @@ export default {
       });
     },
 
-    difference(array1, array2) {
-      const set1 = new Set(array1);
-      const set2 = new Set(array2);
-
-      // 在 array1 中，但不在 array2 中的元素
-      const diff1 = [...set1].filter((item) => !set2.has(item));
-      // 在 array2 中，但不在 array1 中的元素
-      const diff2 = [...set2].filter((item) => !set1.has(item));
-
-      return [...new Set([...diff1, ...diff2])]; // 去除重复元素
-    },
     addConfirm() {
       if (!this.colTitle) {
         this.$message({
@@ -340,27 +501,26 @@ export default {
         });
         return;
       }
-
-      let originArray = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-      let usedArray = [];
-      for (let i = 0; i < this.storyboardHead.length; i++) {
-        if (this.storyboardHead[i].addIndex) {
-          usedArray.push(this.storyboardHead[i].addIndex);
-        }
-      }
-      let availableArray = this.difference(originArray, usedArray);
-
-      this.storyboardHead.push({
-        colName: this.colTitle,
-        addIndex: availableArray[0],
+      this.changeHide("add", {
+        columnName: this.colTitle,
       });
-      for (let i = 0; i < this.storyboardList.length; i++) {
-        this.storyboardList[i][
-          `userAdd${availableArray[0]}`
-        ] = `userAdd${availableArray[0]}`;
-      }
-
       this.showAddPanel = false;
+      this.colTitle = "";
+    },
+    editConfirm(id) {
+      if (!this.colTitle) {
+        this.$message({
+          message: "请填写列标题",
+          type: "error",
+        });
+        return;
+      }
+      this.changeHide("edit", {
+        id: id,
+        columnName: this.colTitle,
+      });
+      this.showEditColPanel = null;
+      this.colTitle = "";
     },
     valueChanged(e, item, colObj, immediate = false, numberLimit = false) {
       clearTimeout(this.timer);
@@ -387,9 +547,18 @@ export default {
         immediate ? 0 : 2000
       );
     },
-
+    colHeadChange(e) {
+      let params = {
+        modelId: this.activeProject.modelId,
+        projectId: this.activeProject.id,
+        modelColumnConfigId: e.moved.element.id,
+        sort: e.moved.newIndex + 1,
+      };
+      moveModelColumnConfig(params).then((res) => {
+        this.toGetMirrorList();
+      });
+    },
     headChange(e) {
-      console.log(e.moved.newIndex, " e.moved.newIndex");
       if (e.moved.newIndex == 0) {
         this.$message({
           message: "不能将列移动至排序之前",
@@ -402,7 +571,7 @@ export default {
         projectId: this.activeProject.id,
         modelColumnConfigId: e.moved.element.colId,
         // modelColumnConfigId: "f41dd78b-7e8e-48c7-9713-10f9ae6652b2",
-        sort: e.moved.newIndex - 1,
+        sort: e.moved.newIndex,
       };
       moveModelColumnConfig(params).then((res) => {
         this.toGetMirrorList();
@@ -425,7 +594,7 @@ export default {
     frameChange(e) {
       updateFileSort({
         fileId: e.moved.element.id,
-        sort: e.moved.newIndex,
+        sort: e.moved.newIndex + 1,
       }).then((res) => {
         this.toGetMirrorList();
       });
@@ -474,6 +643,7 @@ input,
 .storyboard {
   width: 100%;
   background: #fff;
+  overflow-y: hidden;
   .col_flex {
     display: flex;
     flex-direction: column;
@@ -530,14 +700,58 @@ input,
         position: relative;
         cursor: pointer;
         > img {
-          width: 16px;
-          height: 16px;
-          margin-right: 6px;
+          width: 18px;
+          height: 18px;
+          margin-right: 5px;
         }
         .menu_panel {
           position: absolute;
           top: 34px;
           right: 0;
+          width: 200px;
+          background: #ffffff;
+          box-shadow: 0px 1px 29px 0px rgba(0, 0, 0, 0.09);
+          border-radius: 8px;
+          padding: 13px 16px 0 14px;
+          z-index: 3;
+          .menu_panel_head {
+            margin-bottom: 14px;
+            .head_title {
+              font-weight: 600;
+              font-size: 16px;
+              color: #3d3d3d;
+            }
+            .save_model {
+              width: 48px;
+              height: 18px;
+              background: #f3f3f3;
+              border-radius: 3px;
+              font-size: 10px;
+              color: #767676;
+              text-align: center;
+              line-height: 18px;
+              margin-left: auto;
+            }
+          }
+          .column_item {
+            margin-bottom: 24px;
+            .staus_icon {
+              width: 16px;
+              height: 16px;
+              margin-right: 7px;
+              cursor: pointer;
+            }
+            .columnName {
+              font-size: 14px;
+              color: #3d3d3d;
+            }
+            .sort {
+              width: 16px;
+              height: 16px;
+              margin-left: auto;
+              cursor: move;
+            }
+          }
         }
       }
     }
@@ -550,16 +764,18 @@ input,
       flex-direction: column;
       align-items: flex-start;
       margin-top: 30px;
+      height: calc(100% - 68px);
+      padding-right: 32px;
+      overflow-y: auto;
       .width300 {
         width: 300px !important;
       }
       .form_head {
         display: flex;
         .head_item {
+          position: relative;
           width: 120px;
           height: 50px;
-          text-align: center;
-          line-height: 50px;
           background: #f4f6f7;
           font-weight: 500;
           font-size: 14px;
@@ -569,75 +785,127 @@ input,
           &:first-of-type {
             border-radius: 10px 0 0 10px;
           }
+          &:hover {
+            .set_con {
+              display: block;
+            }
+          }
+          .colName {
+            margin-left: 50%;
+            transform: translateX(-50%);
+            flex-shrink: 0;
+          }
+          .set_con {
+            display: none;
+            margin-left: auto;
+            margin-right: 10px;
+            position: relative;
+            .arrow {
+              width: 14px;
+              height: 14px;
+              transform: rotate(-90deg);
+              cursor: pointer;
+            }
+            .set_panel {
+              position: absolute;
+              top: 30px;
+              right: -10px;
+              width: 140px;
+              background: #ffffff;
+              box-shadow: 0px 1px 29px 0px rgba(0, 0, 0, 0.09);
+              border-radius: 6px;
+              padding: 10px;
+              z-index: 3;
+              .set_panel_row {
+                margin-bottom: 12px;
+                font-size: 14px;
+                color: #3d3d3d;
+                &:last-of-type {
+                  margin-bottom: 0;
+                }
+                > img {
+                  width: 18px;
+                  height: 18px;
+                  margin-right: 12px;
+                }
+              }
+            }
+          }
         }
         .add_col {
           position: relative;
           border-radius: 0 10px 10px 0;
           border-right: unset;
           font-size: 18px;
-          .add_panel {
-            position: absolute;
-            top: 30px;
-            left: 60px;
-            width: 200px;
-            background: #ffffff;
-            box-shadow: 0px 1px 29px 0px rgba(0, 0, 0, 0.09);
-            border-radius: 6px;
-            padding: 10px;
-            .subtitle {
+          justify-content: center;
+          > img {
+            width: 16px;
+            height: 16px;
+          }
+        }
+        .add_panel {
+          position: absolute;
+          top: 54px;
+          right: 2px;
+          width: 200px;
+          background: #ffffff;
+          box-shadow: 0px 1px 29px 0px rgba(0, 0, 0, 0.09);
+          border-radius: 6px;
+          padding: 10px;
+          z-index: 3;
+          .subtitle {
+            font-weight: 400;
+            font-size: 14px;
+            color: #3d3d3d;
+            text-align: left;
+            line-height: 24px;
+            height: 24px;
+          }
+          input {
+            width: 170px;
+            height: 30px;
+            border-radius: 5px;
+            padding: 0 12px;
+            border: 1px solid #e4e5ee;
+            text-align: left;
+          }
+
+          ::v-deep .el-input__inner {
+            width: 170px;
+            height: 30px;
+            border-radius: 5px;
+            font-weight: 400;
+            font-size: 12px;
+            color: #3d3d3d;
+          }
+          ::v-deep .el-input__icon {
+            line-height: 30px;
+          }
+          ::v-deep .el-select-dropdown__item.selected {
+            color: #12db34;
+          }
+
+          .btn_con {
+            width: 100%;
+            justify-content: space-evenly;
+            margin-top: 20px;
+            .btn {
+              width: 80px;
+              height: 30px;
+              text-align: center;
+              line-height: 30px;
+              border-radius: 5px;
               font-weight: 400;
               font-size: 14px;
-              color: #3d3d3d;
-              text-align: left;
-              line-height: 24px;
-              height: 24px;
+              cursor: pointer;
             }
-            input {
-              width: 170px;
-              height: 30px;
-              border-radius: 5px;
-              padding: 0 12px;
-              border: 1px solid #e4e5ee;
-              text-align: left;
+            .cancel {
+              border: 1px solid #d8d8d8;
+              color: #959595;
             }
-
-            ::v-deep .el-input__inner {
-              width: 170px;
-              height: 30px;
-              border-radius: 5px;
-              font-weight: 400;
-              font-size: 12px;
-              color: #3d3d3d;
-            }
-            ::v-deep .el-input__icon {
-              line-height: 30px;
-            }
-            ::v-deep .el-select-dropdown__item.selected {
-              color: #12db34;
-            }
-
-            .btn_con {
-              width: 100%;
-              justify-content: space-evenly;
-              margin-top: 20px;
-              .btn {
-                width: 60px;
-                height: 30px;
-                text-align: center;
-                line-height: 30px;
-                border-radius: 5px;
-                font-weight: 400;
-                font-size: 14px;
-                cursor: pointer;
-              }
-              .cancel {
-                border: 1px solid #d8d8d8;
-                color: #959595;
-              }
-              .confirm {
-                color: #ffffff;
-                background: #12db34;
-              }
+            .confirm {
+              color: #ffffff;
+              background: #12db34;
             }
           }
         }
@@ -655,9 +923,9 @@ input,
           width: 120px;
           justify-content: center;
           border-right: 1px dashed #d9d9d9;
-          &:last-of-type {
-            border-right: unset;
-          }
+          // &:last-of-type {
+          //   border-right: unset;
+          // }
         }
         .delete_icon {
           display: none;
@@ -673,7 +941,7 @@ input,
       .change_order {
         width: 16px;
         height: 16px;
-        cursor: pointer;
+        cursor: move;
       }
       .frame_con {
         display: flex;
@@ -730,6 +998,9 @@ input,
                 height: 18px;
                 margin-bottom: 4px;
               }
+            }
+            .sort {
+              cursor: move;
             }
             .mask_add {
               position: absolute;

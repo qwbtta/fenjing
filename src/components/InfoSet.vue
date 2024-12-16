@@ -302,9 +302,10 @@ export default {
           this.toGetUserInfo();
         });
       } else {
+        let token = localStorage.getItem("token");
         //绑定
-        localStorage.removeItem("token");
         loginOut({ token: token }).then((res) => {});
+        localStorage.removeItem("token");
         this.$router.push({ path: "/login", query: { bindType: "bind" } });
       }
     },

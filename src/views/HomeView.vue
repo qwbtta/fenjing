@@ -307,20 +307,21 @@ export default {
     },
     checkShowSortPanel() {
       this.showSortPanel = !this.showSortPanel;
-      if (this.showSortPanel) {
+      let _this = this;
+      function listen(e) {
         const sortPanel = document.getElementById("sortPanel");
         const sortType = document.getElementById("sortType");
-
-        window.outsideClickListener = document.addEventListener(
-          "click",
-          (e) => {
-            // 如果点击的区域不在弹框内部;
-            if (!sortPanel.contains(e.target) && e.target !== sortType) {
-              // 隐藏弹框
-              this.showSortPanel = false;
-            }
-          }
-        );
+        // 如果点击的区域不在弹框内部;
+        if (!sortPanel.contains(e.target) && e.target !== sortType) {
+          // 隐藏弹框
+          _this.showSortPanel = false;
+          document.removeEventListener("click", listen);
+        }
+      }
+      if (this.showSortPanel) {
+        document.addEventListener("click", listen);
+      } else {
+        document.removeEventListener("click", listen);
       }
     },
     getTime(timestamp) {

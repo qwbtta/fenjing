@@ -87,7 +87,10 @@
         >
           <div
             class="list_item flex"
-            :class="{ width300: '内容,画面'.includes(colObj.name) }"
+            :class="{
+              width300:
+                '内容,画面'.includes(colObj.name) || colObj.isSystem == '1',
+            }"
             v-for="(colObj, index3) in item.colObj.slice(1)"
             :key="index3"
           >
@@ -108,7 +111,7 @@
               >
                 <img class="user_img" :src="item2.base64Url" alt="" />
               </div>
-              <div
+              <!-- <div
                 class="frame_item flex"
                 v-if="colObj.content.length == 0"
                 @click="selectImg('dealAdd', item, colObj)"
@@ -118,7 +121,7 @@
                   src="@/assets/img/operatePage/add.png"
                   alt=""
                 />
-              </div>
+              </div> -->
             </div>
             <div v-else class="editDiv">
               {{ colObj.content }}
@@ -462,8 +465,20 @@ export default {
             {
               colName: "排序",
               colId: "index",
+              isSystem: "0",
             },
           ];
+          let isSystemList = []; //用户自定义添加的列  后端用的0/1值和实际命名含义的true/false相反  所以这里变量名含义会有问题
+
+          //后端数据不满足操作  手动处理
+          for (let i = 0; i < colRes.data.length; i++) {
+            if (
+              0 == colRes.data[i].isHidden &&
+              colRes.data[i].isSystem == "1"
+            ) {
+              isSystemList.push(colRes.data[i].columnName);
+            }
+          }
           for (let i = 0; i < colRes.data.length; i++) {
             if (0 == colRes.data[i].isHidden) {
               let item = {
@@ -471,13 +486,17 @@ export default {
                 colId: colRes.data[i].id,
               };
               let specialHead = ["内容", "画面"];
-              if (specialHead.includes(colRes.data[i].columnName)) {
+              if (
+                isSystemList.includes(colRes.data[i].columnName) ||
+                specialHead.includes(colRes.data[i].columnName)
+              ) {
                 item.specialClass = "width300";
               }
               tempHead.push(item);
             }
           }
-
+          // 按 sort属性升序排序
+          tempHead.sort((a, b) => a.sort - b.sort);
           this.options = [];
           this.shootingList = res.data;
           for (let i = 0; i < res.data.length; i++) {
